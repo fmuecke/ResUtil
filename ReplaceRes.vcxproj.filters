@@ -2,6 +2,9 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Handle.hpp" />
+    <ClInclude Include="CmdArgs.hpp" />
+    <ClInclude Include="CmdArgsParser.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ReplaceRes.cpp" />

@@ -138,6 +138,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CmdArgs.hpp" />
+    <ClInclude Include="CmdArgsParser.hpp" />
+    <ClInclude Include="Handle.hpp" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>

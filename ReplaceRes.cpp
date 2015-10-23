@@ -1,4 +1,7 @@
 #include "stdafx.h"
+#include "Handle.hpp"
+#include "CmdArgs.hpp"
+#include "CmdArgsParser.hpp"
 #include <iostream>
 #include <memory>
 #include <string>
@@ -15,48 +18,21 @@ void Usage()
 {
 	cout
 		<< "ReplaceRes v0.1 (c) 2015 Florian Muecke\n\n"
-		<< "usage: (1) ReplaceRes.exe /target:file.ext /id:resID /type:resType (/langId:languageID) /rawData:file.ext\n"
-		<< "       (2) ReplaceRes.exe /target:file.ext /id:resID /type:resType (/langId:languageID) /source:file.ext /sourceId:resID (/sourceLangId:languageID)\n";
+		<< "usage: (1) ReplaceRes.exe write /target /id /type (/langId) /rawData\n"
+		<< "       (2) ReplaceRes.exe copy /target:file.ext /id:resID /type:resType (/langId:languageID) /source:file.ext /sourceId:resID (/sourceLangId:languageID)\n";
 }
 
-struct Handle 
-{
-	Handle(HANDLE handle) : _handle{ handle } {}
-	~Handle() 
-	{
-		if (bool()) ::CloseHandle(_handle);
-	}
 
-	operator HANDLE() const { return _handle; }
-	bool valid() const { return _handle != INVALID_HANDLE_VALUE; }
-
-private:
-	HANDLE _handle;
-};
 
 error_code GetError() 
 {
 	return error_code(::GetLastError(), system_category());
 }
 
-wstring TakeParam(vector<wstring>& args, wstring const& tag)
+vector<char> ReadData(const char* fileName)
 {
-	auto pos = find_if(cbegin(args), cend(args), [&](wstring const& a)
-	{
-		return equal(cbegin(tag), cend(tag), cbegin(a));
-	});
-
-	if (pos == cend(args)) return L"";
-	auto param = (*pos).substr(tag.size());
-	args.erase(pos);
-	
-	return param;
-}
-
-vector<char> ReadData(const wchar_t* fileName)
-{
-	Handle file = { ::CreateFileW(fileName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL) };
-	if (!file.valid())
+	Handle file = { ::CreateFileA(fileName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL) };
+	if (!file.IsValid())
 	{
 		auto err = GetError();
 		auto msg = string("Unable to open target file: ") + err.message();
@@ -65,7 +41,7 @@ vector<char> ReadData(const wchar_t* fileName)
 
 	DWORD size = ::GetFileSize(file, nullptr);
 	vector<char> data(size, 0x00);
-	if (0 == ReadFile(file, data.data(), data.size(), &size, nullptr))
+	if (0 == ReadFile(file, data.data(), static_cast<DWORD>(data.size()), &size, nullptr))
 	{
 		auto err = GetError();
 		auto msg = string("Unable to read data: ") + err.message();
@@ -75,44 +51,86 @@ vector<char> ReadData(const wchar_t* fileName)
 	return data;
 }
 
-map<wstring, wchar_t*> ResTypes
+map<string, char*> ResTypes
 {
-	{ L"accelerator", MAKEINTRESOURCE(9) }, // Accelerator table.
-	{ L"anicursor", MAKEINTRESOURCE(21) }, // Animated cursor.
-	{ L"aniicon", MAKEINTRESOURCE(22) }, // Animated icon.
-	{ L"bitmap", MAKEINTRESOURCE(2) }, // Bitmap resource.
-	{ L"cursor", MAKEINTRESOURCE(1) }, // Hardware - dependent cursor resource.
-	{ L"dialog", MAKEINTRESOURCE(5) }, // Dialog box.
-	{ L"dlginclude", MAKEINTRESOURCE(17) }, // Allows a resource editing tool to associate a string with an.rc file.Typically, the string is the name of the header file that provides symbolic names.The resource compiler parses the string but otherwise ignores the value.For example, 1 DLGINCLUDE "MyFile.h"
-	{ L"font", MAKEINTRESOURCE(8) }, // Font resource.
-	{ L"fontdir", MAKEINTRESOURCE(7) }, // Font directory resource.
-	{ L"groupcursor", MAKEINTRESOURCE((ULONG_PTR)(RT_CURSOR)+11) }, // Hardware - independent cursor resource.
-	{ L"groupicon", MAKEINTRESOURCE((ULONG_PTR)(RT_ICON)+11) }, // Hardware - independent icon resource.
-	{ L"html", MAKEINTRESOURCE(23) }, // HTML resource.
-	{ L"icon", MAKEINTRESOURCE(3) }, // Hardware - dependent icon resource.
-	{ L"manifest", MAKEINTRESOURCE(24) }, // Side - by - Side Assembly Manifest.
-	{ L"menu", MAKEINTRESOURCE(4) }, // Menu resource.
-	{ L"messagetable", MAKEINTRESOURCE(11) }, // Message - table entry.
-	{ L"plugplay", MAKEINTRESOURCE(19) }, // Plug and Play resource.
-	{ L"rcdata", MAKEINTRESOURCE(10) }, // Application - defined resource(raw data).
-	{ L"string", MAKEINTRESOURCE(6) }, // String - table entry.
-	{ L"version", MAKEINTRESOURCE(16) }, // Version resource.
-	{ L"vxd", MAKEINTRESOURCE(20) } // VXD.
+	{ "accelerator", MAKEINTRESOURCEA(9) }, // Accelerator table.
+	{ "anicursor", MAKEINTRESOURCEA(21) }, // Animated cursor.
+	{ "aniicon", MAKEINTRESOURCEA(22) }, // Animated icon.
+	{ "bitmap", MAKEINTRESOURCEA(2) }, // Bitmap resource.
+	{ "cursor", MAKEINTRESOURCEA(1) }, // Hardware - dependent cursor resource.
+	{ "dialog", MAKEINTRESOURCEA(5) }, // Dialog box.
+	{ "dlginclude", MAKEINTRESOURCEA(17) }, // Allows a resource editing tool to associate a string with an.rc file.Typically, the string is the name of the header file that provides symbolic names.The resource compiler parses the string but otherwise ignores the value.For example, 1 DLGINCLUDE "MyFile.h"
+	{ "font", MAKEINTRESOURCEA(8) }, // Font resource.
+	{ "fontdir", MAKEINTRESOURCEA(7) }, // Font directory resource.
+	{ "groupcursor", MAKEINTRESOURCEA((ULONG_PTR)(RT_CURSOR)+11) }, // Hardware - independent cursor resource.
+	{ "groupicon", MAKEINTRESOURCEA((ULONG_PTR)(RT_ICON)+11) }, // Hardware - independent icon resource.
+	{ "html", MAKEINTRESOURCEA(23) }, // HTML resource.
+	{ "icon", MAKEINTRESOURCEA(3) }, // Hardware - dependent icon resource.
+	{ "manifest", MAKEINTRESOURCEA(24) }, // Side - by - Side Assembly Manifest.
+	{ "menu", MAKEINTRESOURCEA(4) }, // Menu resource.
+	{ "messagetable", MAKEINTRESOURCEA(11) }, // Message - table entry.
+	{ "plugplay", MAKEINTRESOURCEA(19) }, // Plug and Play resource.
+	{ "rcdata", MAKEINTRESOURCEA(10) }, // Application - defined resource(raw data).
+	{ "string", MAKEINTRESOURCEA(6) }, // String - table entry.
+	{ "version", MAKEINTRESOURCEA(16) }, // Version resource.
+	{ "vxd", MAKEINTRESOURCEA(20) } // VXD.
 };
 
-int wmain(int argc, wchar_t** argv)
+int main(int argc, char** argv)
 {
+	CmdArgsParser p;
+	p.Add({ "write", "write raw data into the specified file resource",
+	{
+		{"target", "the target file" },
+		{"id", "the resource id" },
+		{"langId", "the language id", CmdArgsParser::RequiredArg::no },
+		{"resType", "the type of the resouce (see below)" },
+		{"rawData", "the file containing the raw data" }
+		} });
+
+	p.Add({ "copy", "copy a resource from one file to another",
+	{
+		{ "target", "the target file" },
+		{ "id", "the resource id for the target file" },
+		{ "langId", "the language id", CmdArgsParser::RequiredArg::no },
+		{ "resType", "the type of the resouce (see below)" },
+		{ "source", "the source file" },
+		{ "sourceId", "the resource id in the source file" },
+		{ "sourceLangId", "the language id of the resource in the source file" }
+	} });
+
+	p.Add({ "dump", "dump the specified resource to disk",
+	{
+		{ "source", "the source file" },
+		{ "id", "the resource id" },
+		{ "langId", "the language id" },
+		{ "resType", "the type of the resouce (see below)" },
+		{ "target", "the target file" },
+	} });
+
+	{
+		stringstream resTypesHelp;
+		resTypesHelp << "Valid resource types are: ";
+		for (auto const& x : ResTypes)
+		{
+			resTypesHelp << x.first << ", ";
+		}
+		auto str = resTypesHelp.str();
+		p.AddAdditionalHelp(str.substr(0, str.size() - 2));
+	}
+
+	cout << p.HelpText();
 	try
 	{
-		vector<wstring> args(argv, argv + argc);
-		auto targetFile = TakeParam(args, L"/target:");
-		auto resId = TakeParam(args, L"/id:");
-		auto langId = TakeParam(args, L"/langId:");
-		auto rawData = TakeParam(args, L"/rawData:");
-		auto resType = TakeParam(args, L"/type:");
-		auto sourceFile = TakeParam(args, L"/source:");
-		auto sourceResId = TakeParam(args, L"/sourceId:");
-		auto sourceLangId = TakeParam(args, L"/sourceLangId:");
+		auto args = CmdArgs<char>(argc, argv);
+		auto targetFile = args.TakeArg("/target:");
+		auto resId = args.TakeArg("/id:");
+		auto langId = args.TakeArg("/langId:");
+		auto rawData = args.TakeArg("/rawData:");
+		auto resType = args.TakeArg("/type:");
+		auto sourceFile = args.TakeArg("/source:");
+		auto sourceResId = args.TakeArg("/sourceId:");
+		auto sourceLangId = args.TakeArg("/sourceLangId:");
 
 		if (targetFile.empty() || resId.empty() || resId.empty() || resType.empty())
 		{
@@ -123,18 +141,18 @@ int wmain(int argc, wchar_t** argv)
 		if (ResTypes.find(resType) == cend(ResTypes))
 		{
 			Usage();
-			wcerr << L"\nInvalid resource type: " << resType << ". Valid types are:\n";
-			for (auto const& r : ResTypes) wcout << "\t" << r.first << "\n";
+			cerr << "\nInvalid resource type: " << resType << ". Valid types are:\n";
+			for (auto const& r : ResTypes) cout << "\t" << r.first << "\n";
 			return ERROR_BAD_ARGUMENTS;
 		}
 
 		if (!rawData.empty())
 		{
-			auto targetFileHandle = ::BeginUpdateResourceW(targetFile.c_str(), FALSE);
+			auto targetFileHandle = ::BeginUpdateResourceA(targetFile.c_str(), FALSE);
 			if (targetFileHandle == NULL)
 			{
 				auto err = GetError();
-				wcerr << L"Opening file '" << targetFile << L"' failed: ";
+				cerr << "Opening file '" << targetFile << L"' failed: ";
 				cout << err.message() << endl;
 				return err.value();
 			}
@@ -144,13 +162,13 @@ int wmain(int argc, wchar_t** argv)
 
 			while (data.size() % 4) data.push_back(0x00);  // data must be aligned
 
-			if (::UpdateResourceW(targetFileHandle, ResTypes[resType], MAKEINTRESOURCEW(id), lang, data.data(), data.size()) == 0)
+			if (::UpdateResourceA(targetFileHandle, ResTypes[resType], MAKEINTRESOURCEA(id), lang, data.data(), static_cast<DWORD>(data.size())) == 0)
 			{
 				auto err = GetError();
 				cerr << "Updating resource failed: " << err.message() << endl;
 				return err.value();
 			}
-			if (::EndUpdateResourceW(targetFileHandle, false) == 0)
+			if (::EndUpdateResourceA(targetFileHandle, false) == 0)
 			{
 				auto err = GetError();
 				cerr << "Resource updates could not be written: " << err.message() << endl;
