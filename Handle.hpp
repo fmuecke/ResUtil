@@ -6,11 +6,11 @@ struct Handle
 	Handle(HANDLE handle) : _handle{ handle } {}
 	~Handle()
 	{
-		if (bool()) ::CloseHandle(_handle);
+		if (IsValid()) ::CloseHandle(_handle);
 	}
 
 	operator HANDLE() const { return _handle; }
-	bool IsValid() const { return _handle != INVALID_HANDLE_VALUE; }
+	bool IsValid() const { return _handle != INVALID_HANDLE_VALUE && _handle != NULL; }
 
 private:
 	HANDLE _handle;
