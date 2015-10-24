@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 		auto args = CmdArgs<char>(argc, argv);
 		auto targetFile = args.TakeArg("/target:");
 		auto resId = args.TakeArg("/id:");
-		auto langId = args.TakeArg("/langId:");
+		//auto langId = args.TakeArg("/langId:");
 		auto rawData = args.TakeArg("/rawData:");
 		auto resType = args.TakeArg("/type:");
 		auto sourceFile = args.TakeArg("/source:");
@@ -157,17 +157,24 @@ int main(int argc, char** argv)
 				return err.value();
 			}
 			auto id = stoi(resId);
-			auto lang = langId.empty() ? MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL) : static_cast<WORD>(stoi(langId));
+			//auto lang = langId.empty() ? WORD(MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL)) : static_cast<WORD>(stoi(langId));
 			auto data = ReadData(rawData.c_str());
 
 			while (data.size() % 4) data.push_back(0x00);  // data must be aligned
 
-			if (::UpdateResourceA(targetFileHandle, ResTypes[resType], MAKEINTRESOURCEA(id), lang, data.data(), static_cast<DWORD>(data.size())) == 0)
+			if (::UpdateResourceA(
+				targetFileHandle, 
+				ResTypes[resType], 
+				MAKEINTRESOURCEA(id), 
+				MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), 
+				data.data(), 
+				static_cast<DWORD>(data.size())) == 0)
 			{
 				auto err = GetError();
 				cerr << "Updating resource failed: " << err.message() << endl;
 				return err.value();
 			}
+
 			if (::EndUpdateResourceA(targetFileHandle, false) == 0)
 			{
 				auto err = GetError();

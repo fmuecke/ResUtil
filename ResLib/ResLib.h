@@ -49,8 +49,8 @@ public:
 
 	static const std::map<const std::string, const char*> Types;
 
-	static void Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId, int langId);
-	static void Clone(const char* fromFile, const char* resType, int fromId, int fromLangId, const char* toFile, int toId, int toLangId);
+	static void Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/);
+	static void Clone(const char* fromFile, const char* resType, int fromId/*, int fromLangId*/, const char* toFile, int toId/*, int toLangId*/);
 	static std::vector<char> Read(const char* fileName, const char* resType, int resId/*, int langId*/);
 };
 

@@ -47,7 +47,6 @@ public:
 		std::string result = "Usage: command /param1:value ... /paramN:value\n\n";
 		size_t maxLen = 0;
 		for (auto const& cmd : _commands) for (auto const& def : cmd.args) maxLen = std::max<size_t>(maxLen, def.id.size());
-		int cmdId = 0;
 		for (auto const& cmd : _commands)
 		{
 			std::stringstream ss;

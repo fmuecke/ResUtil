@@ -70,11 +70,11 @@ ResLib::~ResLib()
 {
 }
 
-void ResLib::Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId, int langId)
+void ResLib::Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/)
 {
 	if (data.empty()) throw InvalidDataException();
 	if (!fileName | !resType) throw ArgumentNullException();
-	if (resId < 0 || langId < 0) throw InvalidArgsException();
+	if (resId < 0 /*|| langId < 0*/) throw InvalidArgsException();
 	auto typePos = Types.find(resType);
 	if (typePos == Types.end()) throw InvalidTypeException(resType);
 
@@ -92,7 +92,13 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
 
 	while (_data.size() % 4) _data.push_back(0x00);  // data must be aligned
 
-	if (::UpdateResourceA(targetFileHandle, (*typePos).second, MAKEINTRESOURCEA(resId), langId, _data.data(), static_cast<DWORD>(data.size())) == 0)
+	if (::UpdateResourceA(
+		targetFileHandle, 
+		(*typePos).second, 
+		MAKEINTRESOURCEA(resId), 
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), 
+		_data.data(), 
+		static_cast<DWORD>(data.size())) == 0)
 	{
 		stringstream msg; 
 		msg << "Updating resource failed: " << GetError().message() << endl;
@@ -106,7 +112,7 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
 	}
 }
 
-void ResLib::Clone(const char* fromFile, const char* resType, int fromId, int fromLangId, const char* toFile, int toId, int toLangId)
+void ResLib::Clone(const char* fromFile, const char* resType, int fromId, /*int fromLangId, */const char* toFile, int toId/*, int toLangId*/)
 {
 	throw std::exception("not implemented, yet");
 }
