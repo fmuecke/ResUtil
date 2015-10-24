@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="LibHandle.h" />
     <ClInclude Include="ResLib.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>

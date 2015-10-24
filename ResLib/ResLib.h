@@ -36,6 +36,12 @@ public:
 		UpdateResourceException(const char* msg) : std::exception(msg) {}
 	};
 
+	struct InvalidResourceException : std::exception
+	{
+		InvalidResourceException(const char* msg) : std::exception(msg) {}
+	};
+
+
 	struct InvalidDataException : std::exception
 	{
 
@@ -43,8 +49,8 @@ public:
 
 	static const std::map<const std::string, const char*> Types;
 
-	static void Write(std::vector<char> const& data, const char* targetFile, const char* resType, int resId, int langId);
+	static void Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId, int langId);
 	static void Clone(const char* fromFile, const char* resType, int fromId, int fromLangId, const char* toFile, int toId, int toLangId);
-	static std::vector<char> Read(const char* targetFile, const char* resType, int resId, int langId);
+	static std::vector<char> Read(const char* fileName, const char* resType, int resId/*, int langId*/);
 };
 

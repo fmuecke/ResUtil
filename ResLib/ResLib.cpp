@@ -3,6 +3,9 @@
 #include <Windows.h>
 #include <system_error>
 #include <sstream>
+#include <memory>
+#include <algorithm>
+#include "LibHandle.h"
 //#include "../Handle.hpp"
 
 using namespace std;
@@ -67,20 +70,20 @@ ResLib::~ResLib()
 {
 }
 
-void ResLib::Write(std::vector<char> const& data, const char* targetFile, const char* resType, int resId, int langId)
+void ResLib::Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId, int langId)
 {
 	if (data.empty()) throw InvalidDataException();
-	if (!targetFile | !resType) throw ArgumentNullException();
+	if (!fileName | !resType) throw ArgumentNullException();
 	if (resId < 0 || langId < 0) throw InvalidArgsException();
 	auto typePos = Types.find(resType);
 	if (typePos == Types.end()) throw InvalidTypeException(resType);
 
-	auto targetFileHandle = ::BeginUpdateResourceA(targetFile, FALSE);
+	auto targetFileHandle = ::BeginUpdateResourceA(fileName, FALSE);
 	if (targetFileHandle == NULL)
 	{
 		auto err = GetError();
 		stringstream msg;
-		msg << "Opening file '" << targetFile << L"' failed: "
+		msg << "Opening file '" << fileName << "' failed: "
 		    << err.message() << endl;
 		throw InvalidFileException(msg.str().c_str());
 	}
@@ -105,10 +108,53 @@ void ResLib::Write(std::vector<char> const& data, const char* targetFile, const 
 
 void ResLib::Clone(const char* fromFile, const char* resType, int fromId, int fromLangId, const char* toFile, int toId, int toLangId)
 {
-
+	throw std::exception("not implemented, yet");
 }
 
-std::vector<char> ResLib::Read(const char* targetFile, const char* resType, int resId, int langId)
+std::vector<char> ResLib::Read(const char* fileName, const char* resType, int resId/*, int langId*/)
 {
-	return{};
+	auto dll = LibHandle(fileName);
+	if (!dll.IsValid())
+	{
+		stringstream msg;
+		msg << "Unable to load file '" << fileName << "': " << GetError().message() << endl;
+		throw InvalidFileException(msg.str().c_str());
+	}
+
+	auto resInfo = ::FindResourceA(dll.handle, MAKEINTRESOURCEA(resId), resType);
+	if (!resInfo)
+	{
+		stringstream msg;
+		msg << "Finding resouce with id=" << resId << " in file '" << fileName << "' failed: " << GetError().message() << endl;
+		throw InvalidResourceException(msg.str().c_str());
+	}
+
+	auto resSize = ::SizeofResource(dll.handle, resInfo);
+	if (resSize == 0)
+	{
+		stringstream msg;
+		msg << "Error getting size of resource with id=" << resId << " in file '" << fileName << "': " << GetError().message() << endl;
+		throw InvalidResourceException(msg.str().c_str());
+	}
+
+	auto resHandle = ::LoadResource(dll.handle, resInfo);
+	if (!resHandle)
+	{
+		stringstream msg;
+		msg << "Error loading resource id=" << resId << " in file '" << fileName << "': " << GetError().message() << endl;
+		throw InvalidResourceException(msg.str().c_str());
+	}
+
+	auto resData = reinterpret_cast<const char*>(::LockResource(resHandle));
+	if (!resData)
+	{
+		stringstream msg;
+		msg << "Error locking resource id=" << resId << " in file '" << fileName << "': " << GetError().message() << endl;
+		throw InvalidResourceException(msg.str().c_str());
+	}
+
+	vector<char> data(resSize, 0x00);
+	copy(resData, resData + resSize, begin(data));
+
+	return data;
 }
