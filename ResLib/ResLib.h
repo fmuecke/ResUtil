@@ -4,7 +4,6 @@
 #include <map>
 #include <string>
 #include <exception>
-//#include <WinUser.h>
 
 class ResLib
 {
@@ -23,23 +22,18 @@ public:
 		std::string _msg;
 	};
 
+	struct InvalidArgsException : public std::exception {};
+	struct ArgumentNullException : public std::exception {};
+	struct InvalidDataException : public std::exception {};
+
 	struct InvalidFileException : public ResLibException
 	{
 		InvalidFileException(std::string const& msg) : ResLibException(msg) {}
 	};
 
-	struct InvalidArgsException : public std::exception
-	{
-	};
-
-	struct ArgumentNullException : public std::exception
-	{
-	};
-
 	struct InvalidTypeException : public ResLibException
 	{
-		InvalidTypeException(const char* type) : ResLibException(std::string("The type is not valid: ").append(type))
-		{}
+		InvalidTypeException(const char* type) : ResLibException(std::string("The type is not valid: ").append(type)) {}
 	};
 
 	struct UpdateResourceException : public ResLibException
@@ -50,11 +44,6 @@ public:
 	struct InvalidResourceException : public ResLibException
 	{
 		InvalidResourceException(std::string const& msg) : ResLibException(msg) {}
-	};
-
-
-	struct InvalidDataException : public std::exception
-	{
 	};
 
 	static const std::map<const std::string, const char*> Types;
