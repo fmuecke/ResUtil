@@ -9,7 +9,7 @@
 
 using namespace std;
 
-error_code GetError()
+static error_code GetError()
 {
 	return error_code(::GetLastError(), system_category());
 }

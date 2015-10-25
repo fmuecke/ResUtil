@@ -12,39 +12,49 @@ public:
 	ResLib();
 	~ResLib();
 
-	struct InvalidFileException : std::exception
+	struct ResLibException : public std::exception
 	{
-		InvalidFileException(const char* msg) : std::exception(msg)	{}
+		ResLibException(std::string const& msg) 
+			: std::exception()
+			, _msg {msg}
+		{}
+
+	private:
+		std::string _msg;
 	};
 
-	struct InvalidArgsException : std::exception 
+	struct InvalidFileException : public ResLibException
+	{
+		InvalidFileException(std::string const& msg) : ResLibException(msg) {}
+	};
+
+	struct InvalidArgsException : public std::exception
 	{
 	};
 
-	struct ArgumentNullException : std::exception
+	struct ArgumentNullException : public std::exception
 	{
 	};
 
-	struct InvalidTypeException : std::exception
+	struct InvalidTypeException : public ResLibException
 	{
-		InvalidTypeException(const char* type) : std::exception(std::string("The type is not valid: ").append(type).c_str())
+		InvalidTypeException(const char* type) : ResLibException(std::string("The type is not valid: ").append(type))
 		{}
 	};
 
-	struct UpdateResourceException : std::exception
+	struct UpdateResourceException : public ResLibException
 	{
-		UpdateResourceException(const char* msg) : std::exception(msg) {}
+		UpdateResourceException(std::string const& msg) : ResLibException(msg) {}
 	};
 
-	struct InvalidResourceException : std::exception
+	struct InvalidResourceException : public ResLibException
 	{
-		InvalidResourceException(const char* msg) : std::exception(msg) {}
+		InvalidResourceException(std::string const& msg) : ResLibException(msg) {}
 	};
 
 
-	struct InvalidDataException : std::exception
+	struct InvalidDataException : public std::exception
 	{
-
 	};
 
 	static const std::map<const std::string, const char*> Types;
