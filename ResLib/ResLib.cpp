@@ -6,7 +6,6 @@
 #include <memory>
 #include <algorithm>
 #include "LibHandle.h"
-//#include "../Handle.hpp"
 
 using namespace std;
 
@@ -14,28 +13,6 @@ error_code GetError()
 {
 	return error_code(::GetLastError(), system_category());
 }
-
-//vector<char> ReadData(const char* fileName)
-//{
-//	Handle file = { ::CreateFileA(fileName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL) };
-//	if (!file.IsValid())
-//	{
-//		auto err = GetError();
-//		auto msg = string("Unable to open target file: ") + err.message();
-//		throw std::exception(msg.c_str(), err.value());
-//	}
-//
-//	DWORD size = ::GetFileSize(file, nullptr);
-//	vector<char> data(size, 0x00);
-//	if (0 == ReadFile(file, data.data(), static_cast<DWORD>(data.size()), &size, nullptr))
-//	{
-//		auto err = GetError();
-//		auto msg = string("Unable to read data: ") + err.message();
-//		throw std::exception(msg.c_str(), err.value());
-//	}
-//
-//	return data;
-//}
 
 const std::map<const std::string, const char*> ResLib::Types =
 {
@@ -112,11 +89,6 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
 	}
 }
 
-void ResLib::Clone(const char* fromFile, const char* resType, int fromId, /*int fromLangId, */const char* toFile, int toId/*, int toLangId*/)
-{
-	throw std::exception("not implemented, yet");
-}
-
 std::vector<char> ResLib::Read(const char* fileName, const char* resType, int resId/*, int langId*/)
 {
 	auto dll = LibHandle(fileName);
@@ -164,3 +136,10 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
 
 	return data;
 }
+
+void ResLib::Copy(const char* fromFile, const char* resType, int fromId, /*int fromLangId, */const char* toFile, int toId/*, int toLangId*/)
+{
+	auto const& data = Read(fromFile, resType, fromId);
+	Write(data, toFile, resType, toId);
+}
+
