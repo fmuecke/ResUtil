@@ -20,7 +20,7 @@ public:
 			return std::equal(std::cbegin(tag), std::cend(tag), std::cbegin(arg));
 		});
 
-		if (pos == std::cend(_args)) return T();
+		if (pos == std::cend(_args)) return StrType();
 		auto arg = (*pos).substr(tag.size());
 		_args.erase(pos);
 
