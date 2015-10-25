@@ -52,8 +52,8 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
 	if (data.empty()) throw InvalidDataException();
 	if (!fileName | !resType) throw ArgumentNullException();
 	if (resId < 0 /*|| langId < 0*/) throw InvalidArgsException();
-	auto typePos = Types.find(resType);
-	if (typePos == Types.end()) throw InvalidTypeException(resType);
+	auto resTypePos = Types.find(resType);
+	if (resTypePos == Types.end()) throw InvalidTypeException(resType);
 
 	auto targetFileHandle = ::BeginUpdateResourceA(fileName, FALSE);
 	if (targetFileHandle == NULL)
@@ -71,7 +71,7 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
 
 	if (::UpdateResourceA(
 		targetFileHandle, 
-		(*typePos).second, 
+		resTypePos->second,
 		MAKEINTRESOURCEA(resId), 
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), 
 		_data.data(), 
@@ -91,6 +91,11 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
 
 std::vector<char> ResLib::Read(const char* fileName, const char* resType, int resId/*, int langId*/)
 {
+	if (!fileName | !resType) throw ArgumentNullException();
+	auto resTypePos = Types.find(resType);
+	if (resTypePos == Types.end()) throw InvalidTypeException(resType);
+	if (resId < 0 /*|| langId < 0*/) throw InvalidArgsException();
+
 	auto dll = LibHandle(fileName);
 	if (!dll.IsValid())
 	{
@@ -99,7 +104,7 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
 		throw InvalidFileException(msg.str().c_str());
 	}
 
-	auto resInfo = ::FindResourceA(dll.handle, MAKEINTRESOURCEA(resId), resType);
+	auto resInfo = ::FindResourceA(dll.handle, MAKEINTRESOURCEA(resId), resTypePos->second);
 	if (!resInfo)
 	{
 		stringstream msg;
