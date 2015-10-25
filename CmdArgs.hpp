@@ -2,7 +2,6 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <map>
 
 template<typename T>
 class CmdArgs
@@ -13,7 +12,7 @@ public:
 	CmdArgs(int argc, T** argv) : _args(argv, argv + argc)
 	{}
 
-	StrType TakeArg(StrType const& tag)
+	StrType TakeArg(StrType const& tag) noexcept
 	{
 		auto pos = std::find_if(std::cbegin(_args), std::cend(_args), [&](StrType const& arg)
 		{

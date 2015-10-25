@@ -34,17 +34,17 @@ public:
 
 	explicit CmdArgsParser(const char* title) : _programTitle{ title } {}
 
-	void Add(CommandSet&& set)
+	void Add(CommandSet&& set) noexcept
 	{
 		_commands.emplace_back(std::move(set));
 	}
 
-	void AddAdditionalHelp(std::string&& s)
+	void AddAdditionalHelp(std::string&& s) noexcept
 	{
 		_additionalHelp.emplace_back(std::move(s));
 	}
 
-	std::string HelpText() const
+	std::string HelpText() const noexcept
 	{
 		std::string result = _programTitle + "\n\nUsage: command /param1:value ... /paramN:value\n\n";
 		size_t maxLen = 0;
