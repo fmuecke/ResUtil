@@ -5,9 +5,11 @@
     <ClInclude Include="Handle.hpp" />
     <ClInclude Include="CmdArgs.hpp" />
     <ClInclude Include="CmdArgsParser.hpp" />
+    <ClInclude Include="ResUtil.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ReplaceRes.cpp" />
     <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="ResUtil.cpp" />
   </ItemGroup>
 </Project>

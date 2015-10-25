@@ -32,6 +32,8 @@ public:
 		std::vector<ArgDefinition> args;
 	};
 
+	explicit CmdArgsParser(const char* title) : _programTitle{ title } {}
+
 	void Add(CommandSet&& set)
 	{
 		_commands.emplace_back(std::move(set));
@@ -44,7 +46,7 @@ public:
 
 	std::string HelpText() const
 	{
-		std::string result = "Usage: command /param1:value ... /paramN:value\n\n";
+		std::string result = _programTitle + "\n\nUsage: command /param1:value ... /paramN:value\n\n";
 		size_t maxLen = 0;
 		for (auto const& cmd : _commands) for (auto const& def : cmd.args) maxLen = std::max<size_t>(maxLen, def.id.size());
 		for (auto const& cmd : _commands)
@@ -79,6 +81,7 @@ private:
 		return s;
 	}
 
+	std::string _programTitle;
 	std::vector<CommandSet> _commands;
 	std::vector<std::string> _additionalHelp;
 };

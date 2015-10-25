@@ -3,6 +3,7 @@
 #include "CmdArgs.hpp"
 #include "CmdArgsParser.hpp"
 #include "ResLib\ResLib.h"
+#include "ResUtil.h"
 #include <iostream>
 #include <memory>
 #include <string>
@@ -15,81 +16,37 @@
 
 using namespace std;
 
-static void Usage()
-{
-	cout
-		<< "ReplaceRes v0.1 (c) 2015 Florian Muecke\n\n"
-		<< "usage: (1) ReplaceRes.exe write /target /id /type (/langId) /rawData\n"
-		<< "       (2) ReplaceRes.exe copy /target:file.ext /id:resID /type:resType (/langId:languageID) /source:file.ext /sourceId:resID (/sourceLangId:languageID)\n";
-}
-
-static error_code GetError()
-{
-	return error_code(::GetLastError(), system_category());
-}
-
-struct IoException : public std::exception
-{
-	IoException(const char* msg) :_msg{ msg } {}
-
-	virtual const char* what() const override { return _msg.c_str(); }
-
-private:
-	string _msg;
-};
-
-static vector<char> ReadData(const char* fileName)
-{
-	Handle file = { ::CreateFileA(fileName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL) };
-	if (!file.IsValid())
-	{
-		auto msg = string("Unable to open target file: ") + GetError().message();
-		throw IoException(msg.c_str());
-	}
-
-	DWORD size = ::GetFileSize(file, nullptr);
-	vector<char> data(size, 0x00);
-	if (0 == ReadFile(file, data.data(), static_cast<DWORD>(data.size()), &size, nullptr))
-	{
-		auto err = GetError();
-		auto msg = string("Unable to read data: ") + err.message();
-		throw IoException(msg.c_str());
-	}
-
-	return data;
-}
-
-
 int main(int argc, char** argv)
 {
-	CmdArgsParser p;
+	CmdArgsParser p( "ResUtil v0.2 (c) 2015 Florian Muecke" );
+
 	p.Add({ "write", "write raw data into the specified file resource",
 	{
-		{"target", "the target file" },
+		{"in", "the file containing the raw data" },
+		{"out", "the target file" },
+		{"type", "the type of the resouce (see below)" },
 		{"id", "the resource id" },
-		{"langId", "the language id", CmdArgsParser::RequiredArg::no },
-		{"resType", "the type of the resouce (see below)" },
-		{"rawData", "the file containing the raw data" }
+		//{"lang", "the language id", CmdArgsParser::RequiredArg::no }
 		} });
 
 	p.Add({ "read", "read the specified resource and dump it to disk",
 	{
-		{ "source", "the source file" },
+		{ "in", "the source file" },
+		{ "out", "the target file" },
+		{ "type", "the type of the resouce (see below)" },
 		{ "id", "the resource id" },
-		{ "langId", "the language id" },
-		{ "resType", "the type of the resouce (see below)" },
-		{ "target", "the target file" },
+		//{ "lang", "the language id" }
 	} });
 
 	p.Add({ "copy", "copy a resource from one file to another",
 	{
-		{ "target", "the target file" },
-		{ "id", "the resource id for the target file" },
-		{ "langId", "the language id", CmdArgsParser::RequiredArg::no },
-		{ "resType", "the type of the resouce (see below)" },
-		{ "source", "the source file" },
-		{ "sourceId", "the resource id in the source file" },
-		{ "sourceLangId", "the language id of the resource in the source file" }
+		{ "in", "the source file" },
+		{ "out", "the target file" },
+		{ "type", "the type of the resouce (see below)" },
+		{ "idIn", "the resource id in the source file" },
+		{ "idOut", "the resource id for the target file" },
+		//{ "langIn", "the language id of the resource in the source file" },
+		//{ "langOut", "the language id", CmdArgsParser::RequiredArg::no }
 	} });
 
 	{
@@ -103,9 +60,10 @@ int main(int argc, char** argv)
 		p.AddAdditionalHelp(str.substr(0, str.size() - 2));
 	}
 
-	//cout << p.HelpText();
+	cout << p.HelpText();
 	try
 	{
+		ResUtil rr;
 		auto args = CmdArgs<char>(argc, argv);
 		auto targetFile = args.TakeArg("/target:");
 		auto resId = args.TakeArg("/id:");
@@ -118,13 +76,13 @@ int main(int argc, char** argv)
 
 		if (targetFile.empty() || resId.empty() || resId.empty() || resType.empty())
 		{
-			Usage();
+			rr.PrintUsage();
 			return ERROR_BAD_ARGUMENTS;
 		}
 
 		if (ResLib::Types.find(resType) == cend(ResLib::Types))
 		{
-			Usage();
+			rr.PrintUsage();
 			cerr << "\nInvalid resource type: " << resType << ". Valid types are:\n";
 			for (auto const& r : ResLib::Types) cout << "\t" << r.first << "\n";
 			return ERROR_BAD_ARGUMENTS;
@@ -133,11 +91,8 @@ int main(int argc, char** argv)
 		if (!rawData.empty())
 		{
 			//auto lang = langId.empty() ? WORD(MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL)) : static_cast<WORD>(stoi(langId));
-			auto data = ReadData(rawData.c_str());
-
+			auto data = rr.ReadData(rawData.c_str());
 			ResLib::Write(data, targetFile.c_str(), resType.c_str(), stoi(resId));
-
-
 		}
 		else
 		{
@@ -148,7 +103,7 @@ int main(int argc, char** argv)
 			}
 			else
 			{
-				Usage();
+				rr.PrintUsage();
 				return ERROR_BAD_ARGUMENTS;
 			}
 		}
