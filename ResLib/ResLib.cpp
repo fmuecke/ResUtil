@@ -4,6 +4,7 @@
 #include <system_error>
 #include <sstream>
 #include <memory>
+#include <iterator>
 #include <algorithm>
 #include "LibHandle.h"
 
@@ -47,7 +48,7 @@ ResLib::~ResLib()
 {
 }
 
-void ResLib::Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/)
+void ResLib::Write(std::vector<unsigned char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/)
 {
 	if (data.empty()) throw InvalidDataException();
 	if (!fileName | !resType) throw ArgumentNullException();
@@ -67,7 +68,7 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
 
 	auto _data = data;
 
-	while (_data.size() % 4) _data.push_back(0x00);  // data must be aligned
+	while (_data.size() % 8) _data.emplace_back(0x00);  // data must be aligned
 
 	if (::UpdateResourceA(
 		targetFileHandle, 
@@ -89,7 +90,7 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
 	}
 }
 
-std::vector<char> ResLib::Read(const char* fileName, const char* resType, int resId/*, int langId*/)
+std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resType, int resId/*, int langId*/)
 {
 	if (!fileName | !resType) throw ArgumentNullException();
 	auto resTypePos = Types.find(resType);
@@ -136,8 +137,9 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
 		throw InvalidResourceException(msg.str().c_str());
 	}
 
-	vector<char> data(resSize, 0x00);
-	copy(resData, resData + resSize, begin(data));
+	vector<unsigned char> data;
+	data.reserve(resSize);
+	copy(resData, resData + resSize, back_inserter(data));
 
 	return data;
 }

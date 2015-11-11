@@ -27,7 +27,7 @@ public:
 			<< "       (2) ReplaceRes.exe copy /target:file.ext /id:resID /type:resType (/langId:languageID) /source:file.ext /sourceId:resID (/sourceLangId:languageID)\n";
 	}
 
-	static std::vector<char> ReadData(const char* fileName)
+	static std::vector<unsigned char> ReadData(const char* fileName)
 	{
 		Handle file = { ::CreateFileA(fileName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL) };
 		if (!file.IsValid())
@@ -37,7 +37,7 @@ public:
 		}
 
 		DWORD size = ::GetFileSize(file, nullptr);
-		std::vector<char> data(size, 0x00);
+		auto data = std::vector<unsigned char>(size, 0x00);
 		if (0 == ReadFile(file, data.data(), static_cast<DWORD>(data.size()), &size, nullptr))
 		{
 			auto err = GetError();

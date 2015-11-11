@@ -48,8 +48,8 @@ public:
 
 	static const std::map<const std::string, const char*> Types;
 
-	static void Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/);
-	static std::vector<char> Read(const char* fileName, const char* resType, int resId/*, int langId*/);
+	static void Write(std::vector<unsigned char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/);
+	static std::vector<unsigned char> Read(const char* fileName, const char* resType, int resId/*, int langId*/);
 	static void Copy(const char* fromFile, const char* resType, int fromId/*, int fromLangId*/, const char* toFile, int toId/*, int toLangId*/);
 };
 

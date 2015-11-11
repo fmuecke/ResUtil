@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{9A1DC0BE-0275-4893-897F-797D83B13014}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>ReplaceRes</RootNamespace>
+    <RootNamespace>ResUtil</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
     <ProjectName>ResUtil</ProjectName>
   </PropertyGroup>
