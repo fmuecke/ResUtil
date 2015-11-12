@@ -22,6 +22,17 @@ public:
 		std::string _msg;
 	};
 
+	struct InvalidCommandArgsException : public ParseException
+	{
+		explicit InvalidCommandArgsException(std::string command, std::string&& msg)
+			: ParseException(std::move(msg))
+			, _cmd{ std::move(command) }
+		{}
+		const char* Command() const { return _cmd.c_str(); }
+
+	private:
+		std::string _cmd;
+	};
 	enum class RequiredArg { yes, no };
 
 	struct ArgDefinition
@@ -85,7 +96,7 @@ public:
 			auto&& value = TakeArg(args, cmdArg.id);
 			if (value.empty())
 			{
-				throw ParseException(std::string("\nerror: argument '") + cmdArg.id + "' is invalid\n");
+				throw InvalidCommandArgsException(_parsedArgs.command, std::string("\nerror: argument '") + cmdArg.id + "' is invalid\n");
 			}
 			_parsedArgs.args.emplace(cmdArg.id, std::move(value));
 		}
@@ -93,11 +104,21 @@ public:
 
 	std::string HelpText() const noexcept
 	{
+		return HelpText(std::string());
+	}
+
+	std::string HelpText(std::string&& command) const noexcept
+	{
 		std::string result = _programTitle + "\n\nUsage: command /param1:value ... /paramN:value\n\n";
 		size_t maxLen = 0;
 		for (auto const& cmd : _commands) for (auto const& def : cmd.args) maxLen = std::max<size_t>(maxLen, def.id.size());
 		for (auto const& cmd : _commands)
 		{
+			if (!command.empty() && command != cmd.command)
+			{
+				continue;
+			}
+
 			std::stringstream ss;
 			ss << Pad(cmd.command,maxLen) << "  " << cmd.description << "\n";
 			//ss << "  params\n";

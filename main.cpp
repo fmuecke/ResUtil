@@ -63,9 +63,14 @@ int main(int argc, char** argv)
 	{
 		argsParser.Parse(argc, argv);
 	}
+	catch (CmdArgsParser::InvalidCommandArgsException& e)
+	{
+		cerr << argsParser.HelpText(e.Command());
+		cerr << "\n" << e.what() << "\n";
+		return ERROR_BAD_ARGUMENTS;
+	}
 	catch (CmdArgsParser::ParseException& e)
 	{
-		//TODO: display only help text for specific command
 		cerr << argsParser.HelpText();
 		cerr << "\n" << e.what() << "\n";
 		return ERROR_BAD_ARGUMENTS;
