@@ -18,6 +18,8 @@ public:
 			, _msg {msg}
 		{}
 
+		virtual const char* what() const override { return _msg.c_str(); }
+
 	private:
 		std::string _msg;
 	};

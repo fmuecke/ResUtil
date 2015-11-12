@@ -101,7 +101,7 @@ std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resTyp
 	if (!dll.IsValid())
 	{
 		stringstream msg;
-		msg << "Unable to load file '" << fileName << "': " << GetError().message() << endl;
+		msg << "Unable to open file '" << fileName << endl;
 		throw InvalidFileException(msg.str().c_str());
 	}
 
