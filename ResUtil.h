@@ -19,14 +19,6 @@ public:
 	ResUtil();
 	~ResUtil();
 
-	static void PrintUsage()
-	{
-		std::cout
-			<< "ReplaceRes v0.1 (c) 2015 Florian Muecke\n\n"
-			<< "usage: (1) ReplaceRes.exe write /target /id /type (/langId) /rawData\n"
-			<< "       (2) ReplaceRes.exe copy /target:file.ext /id:resID /type:resType (/langId:languageID) /source:file.ext /sourceId:resID (/sourceLangId:languageID)\n";
-	}
-
 	static std::vector<unsigned char> ReadData(const char* fileName)
 	{
 		Handle file = { ::CreateFileA(fileName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL) };
@@ -38,7 +30,7 @@ public:
 
 		DWORD size = ::GetFileSize(file, nullptr);
 		auto data = std::vector<unsigned char>(size, 0x00);
-		if (0 == ReadFile(file, data.data(), static_cast<DWORD>(data.size()), &size, nullptr))
+		if (0 == ::ReadFile(file, data.data(), static_cast<DWORD>(data.size()), &size, nullptr))
 		{
 			auto err = GetError();
 			auto msg = std::string("Unable to read data: ") + err.message();
@@ -46,6 +38,18 @@ public:
 		}
 
 		return data;
+	}
+
+	static void WriteData(std::vector<unsigned char> const& data, const char* fileName)
+	{
+		Handle file = { ::CreateFileA(fileName, GENERIC_WRITE, FILE_SHARE_WRITE, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL) };
+		DWORD bytesWritten{ 0 };
+		if (!::WriteFile(file, data.data(), data.size(), &bytesWritten, 0))
+		{
+			auto err = GetError();
+			auto msg = std::string("Unable to write data: ") + err.message();
+			throw IoException(msg.c_str());
+		}
 	}
 
 private:

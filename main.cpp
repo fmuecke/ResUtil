@@ -18,9 +18,9 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-	CmdArgsParser p( "ResUtil v0.2 (c) 2015 Florian Muecke" );
+	CmdArgsParser argsParser{ "ResUtil v0.3 (c) 2015 Florian Muecke" };
 
-	p.Add({ "write", "write raw data into the specified file resource",
+	argsParser.Add({ "write", "write raw data into the specified file resource",
 	{
 		{"in", "the file containing the raw data" },
 		{"out", "the target file" },
@@ -29,7 +29,7 @@ int main(int argc, char** argv)
 		//{"lang", "the language id", CmdArgsParser::RequiredArg::no }
 		} });
 
-	p.Add({ "read", "read the specified resource and dump it to disk",
+	argsParser.Add({ "read", "read the specified resource and dump it to disk",
 	{
 		{ "in", "the source file" },
 		{ "out", "the target file" },
@@ -38,7 +38,7 @@ int main(int argc, char** argv)
 		//{ "lang", "the language id" }
 	} });
 
-	p.Add({ "copy", "copy a resource from one file to another",
+	argsParser.Add({ "copy", "copy a resource from one file to another",
 	{
 		{ "in", "the source file" },
 		{ "out", "the target file" },
@@ -57,55 +57,53 @@ int main(int argc, char** argv)
 			resTypesHelp << x.first << ", ";
 		}
 		auto str = resTypesHelp.str();
-		p.AddAdditionalHelp(str.substr(0, str.size() - 2));
+		argsParser.AddAdditionalHelp(str.substr(0, str.size() - 2));
 	}
-
-	cout << p.HelpText();
 	try
 	{
-		ResUtil rr;
-		auto args = CmdArgs<char>(argc, argv);
-		auto targetFile = args.TakeArg("/target:");
-		auto resId = args.TakeArg("/id:");
-		//auto langId = args.TakeArg("/langId:");
-		auto rawData = args.TakeArg("/rawData:");
-		auto resType = args.TakeArg("/type:");
-		auto sourceFile = args.TakeArg("/source:");
-		auto sourceResId = args.TakeArg("/sourceId:");
-		auto sourceLangId = args.TakeArg("/sourceLangId:");
+		argsParser.Parse(argc, argv);
+	}
+	catch (CmdArgsParser::ParseException& e)
+	{
+		//TODO: display only help text for specific command
+		cerr << argsParser.HelpText();
+		cerr << "\n" << e.what() << "\n";
+		return ERROR_BAD_ARGUMENTS;
+	}
 
-		if (targetFile.empty() || resId.empty() || resId.empty() || resType.empty())
+	try
+	{
+		if (ResLib::Types.find(argsParser.GetValue("type")) == cend(ResLib::Types))
 		{
-			rr.PrintUsage();
-			return ERROR_BAD_ARGUMENTS;
-		}
-
-		if (ResLib::Types.find(resType) == cend(ResLib::Types))
-		{
-			rr.PrintUsage();
-			cerr << "\nInvalid resource type: " << resType << ". Valid types are:\n";
+			cerr << argsParser.HelpText();
+			cerr << "\nerror: invalid resource type: " << argsParser.GetValue("type") << ". Valid types are:\n";
 			for (auto const& r : ResLib::Types) cout << "\t" << r.first << "\n";
 			return ERROR_BAD_ARGUMENTS;
 		}
 
-		if (!rawData.empty())
+		if (argsParser.GetCommand() == "write")
 		{
 			//auto lang = langId.empty() ? WORD(MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL)) : static_cast<WORD>(stoi(langId));
-			auto data = rr.ReadData(rawData.c_str());
-			ResLib::Write(data, targetFile.c_str(), resType.c_str(), stoi(resId));
+			auto data = ResUtil::ReadData(argsParser.GetValue("in").c_str());
+			ResLib::Write(data, argsParser.GetValue("out").c_str(), argsParser.GetValue("type").c_str(), stoi(argsParser.GetValue("id")));
+		}
+		else if (argsParser.GetCommand() == "read")
+		{
+			auto data = ResLib::Read(
+				argsParser.GetValue("in").c_str(),
+				argsParser.GetValue("type").c_str(),
+				stoi(argsParser.GetValue("id")));
+
+			ResUtil::WriteData(data, argsParser.GetValue("out").c_str());
+		}
+		else if (argsParser.GetCommand() == "clone")
+		{
+			throw std::exception("NOT IMPLEMENTED");
 		}
 		else
 		{
-			if (!sourceFile.empty() && !sourceResId.empty())
-			{
-				cerr << "Not implemented yet";
-				return 1;
-			}
-			else
-			{
-				rr.PrintUsage();
-				return ERROR_BAD_ARGUMENTS;
-			}
+			cerr << argsParser.HelpText();
+			return ERROR_BAD_ARGUMENTS;
 		}
 	}
 	catch (std::exception& e)

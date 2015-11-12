@@ -1,11 +1,27 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <map>
 #include <sstream>
+
+#ifndef RANGE
+#define RANGE(c)	cbegin(c), cend(c)
+#endif
 
 class CmdArgsParser
 {
 public:
+	
+	struct ParseException : public std::exception
+	{
+		//explicit ParseException(const char* msg) : _msg{ msg } {}
+		explicit ParseException(std::string&& msg) : _msg{ std::move(msg) } {}
+		virtual const char* what() const override { return _msg.c_str(); }
+
+	private:
+		std::string _msg;
+	};
+
 	enum class RequiredArg { yes, no };
 
 	struct ArgDefinition
@@ -32,6 +48,12 @@ public:
 		std::vector<ArgDefinition> args;
 	};
 
+	struct ParsedArgs
+	{
+		std::string command;
+		std::map<std::string, std::string> args;
+	};
+
 	explicit CmdArgsParser(const char* title) : _programTitle{ title } {}
 
 	void Add(CommandSet&& set) noexcept
@@ -42,6 +64,31 @@ public:
 	void AddAdditionalHelp(std::string&& s) noexcept
 	{
 		_additionalHelp.emplace_back(std::move(s));
+	}
+
+	void Parse(int argc, char** argv)
+	{
+		auto args = std::vector<std::string>(argv, argv + argc);
+
+		// find command in args
+		auto pos = std::find_first_of(RANGE(args), RANGE(_commands), [](std::string const& s, CommandSet const& c) { return c.command == s; });
+		if (pos == cend(args))
+		{
+			throw ParseException("error: no command found\n");
+		}
+		_parsedArgs.command = *pos;
+		args.erase(pos);
+		
+		auto const& cmdSet = *find_if(RANGE(_commands), [&](CommandSet const& c) { return c.command == _parsedArgs.command; });
+		for (auto const& cmdArg : cmdSet.args)
+		{
+			auto&& value = TakeArg(args, cmdArg.id);
+			if (value.empty())
+			{
+				throw ParseException(std::string("error: argument '") + cmdArg.id + "' is invalid\n");
+			}
+			_parsedArgs.args.emplace(cmdArg.id, std::move(value));
+		}
 	}
 
 	std::string HelpText() const noexcept
@@ -74,7 +121,32 @@ public:
 		return result;
 	}
 
+	std::string GetCommand() const noexcept
+	{
+		return _parsedArgs.command;
+	}
+
+	std::string GetValue(std::string const& s) const noexcept
+	{ 
+		auto pos =_parsedArgs.args.find(s);
+		return pos != cend(_parsedArgs.args) ? pos->second : std::string();
+	}
+
 private:
+	static std::string TakeArg(std::vector<std::string>& args, std::string const& tag) noexcept
+	{
+		auto fullTag = "/" + tag + ":";
+		auto pos = std::find_if(RANGE(args), [&](std::string const& arg)
+		{
+			return std::equal(RANGE(fullTag), cbegin(arg));
+		});
+
+		if (pos == cend(args)) return std::string();
+		auto arg = (*pos).substr(fullTag.size());
+		args.erase(pos);
+		return arg;
+	}
+
 	static std::string Pad(std::string s, size_t len)
 	{
 		while (s.size() < len) s.push_back(' ');
@@ -84,4 +156,6 @@ private:
 	std::string _programTitle;
 	std::vector<CommandSet> _commands;
 	std::vector<std::string> _additionalHelp;
+
+	ParsedArgs _parsedArgs;
 };
