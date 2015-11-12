@@ -10,11 +10,6 @@
 
 using namespace std;
 
-static error_code GetError()
-{
-	return error_code(::GetLastError(), system_category());
-}
-
 const std::map<const std::string, const char*> ResLib::Types =
 {
 	{ "accelerator", MAKEINTRESOURCEA(9) }, // Accelerator table.
@@ -40,6 +35,14 @@ const std::map<const std::string, const char*> ResLib::Types =
 	{ "vxd", MAKEINTRESOURCEA(20) } // VXD.
 };
 
+static string GetError()
+{
+	auto code = ::GetLastError();
+	auto err = error_code(code, system_category());
+	auto msg = err.message();
+	return msg.empty() ? "code = " + to_string(err.value()) + ")\n" : msg;
+}
+
 ResLib::ResLib()
 {
 }
@@ -61,8 +64,7 @@ void ResLib::Write(std::vector<unsigned char> const& data, const char* fileName,
 	{
 		auto err = GetError();
 		stringstream msg;
-		msg << "Opening file '" << fileName << "' failed: "
-		    << err.message() << endl;
+		msg << "Opening file '" << fileName << "' failed: " << err << endl;
 		throw InvalidFileException(msg.str().c_str());
 	}
 
@@ -78,14 +80,16 @@ void ResLib::Write(std::vector<unsigned char> const& data, const char* fileName,
 		_data.data(), 
 		static_cast<DWORD>(data.size())) == 0)
 	{
+		auto err = GetError();
 		stringstream msg; 
-		msg << "Updating resource failed: " << GetError().message() << endl;
+		msg << "Updating resource failed: " << err << endl;
 		throw UpdateResourceException(msg.str().c_str());
 	}
 	if (::EndUpdateResourceA(targetFileHandle, false) == 0)
 	{
+		auto err = GetError();
 		stringstream msg;
-		msg << "Resource update could not be written: " << GetError().message() << endl;
+		msg << "Resource update could not be written: " << err << endl;
 		throw UpdateResourceException(msg.str().c_str());
 	}
 }
@@ -108,32 +112,36 @@ std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resTyp
 	auto resInfo = ::FindResourceA(dll.handle, MAKEINTRESOURCEA(resId), resTypePos->second);
 	if (!resInfo)
 	{
+		auto err = GetError();
 		stringstream msg;
-		msg << "Finding resouce with id=" << resId << " in file '" << fileName << "' failed: " << GetError().message() << endl;
+		msg << "Finding resouce with id=" << resId << " in file '" << fileName << "' failed: " << err << endl;
 		throw InvalidResourceException(msg.str().c_str());
 	}
 
 	auto resSize = ::SizeofResource(dll.handle, resInfo);
 	if (resSize == 0)
 	{
+		auto err = GetError();
 		stringstream msg;
-		msg << "Error getting size of resource with id=" << resId << " in file '" << fileName << "': " << GetError().message() << endl;
+		msg << "Error getting size of resource with id=" << resId << " in file '" << fileName << "': " << err << endl;
 		throw InvalidResourceException(msg.str().c_str());
 	}
 
 	auto resHandle = ::LoadResource(dll.handle, resInfo);
 	if (!resHandle)
 	{
+		auto err = GetError();
 		stringstream msg;
-		msg << "Error loading resource id=" << resId << " in file '" << fileName << "': " << GetError().message() << endl;
+		msg << "Error loading resource id=" << resId << " in file '" << fileName << "': " << err << endl;
 		throw InvalidResourceException(msg.str().c_str());
 	}
 
 	auto resData = reinterpret_cast<const char*>(::LockResource(resHandle));
 	if (!resData)
 	{
+		auto err = GetError();
 		stringstream msg;
-		msg << "Error locking resource id=" << resId << " in file '" << fileName << "': " << GetError().message() << endl;
+		msg << "Error locking resource id=" << resId << " in file '" << fileName << "': " << err << endl;
 		throw InvalidResourceException(msg.str().c_str());
 	}
 

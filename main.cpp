@@ -108,7 +108,7 @@ int main(int argc, char** argv)
 	}
 	catch (std::exception& e)
 	{
-		cerr << e.what();
+		cerr << "\nerror: " << e.what();
 		return 1;
 	}
 }

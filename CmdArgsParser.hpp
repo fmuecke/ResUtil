@@ -74,7 +74,7 @@ public:
 		auto pos = std::find_first_of(RANGE(args), RANGE(_commands), [](std::string const& s, CommandSet const& c) { return c.command == s; });
 		if (pos == cend(args))
 		{
-			throw ParseException("error: no command found\n");
+			throw ParseException("\nerror: no command specified\n");
 		}
 		_parsedArgs.command = *pos;
 		args.erase(pos);
@@ -85,7 +85,7 @@ public:
 			auto&& value = TakeArg(args, cmdArg.id);
 			if (value.empty())
 			{
-				throw ParseException(std::string("error: argument '") + cmdArg.id + "' is invalid\n");
+				throw ParseException(std::string("\nerror: argument '") + cmdArg.id + "' is invalid\n");
 			}
 			_parsedArgs.args.emplace(cmdArg.id, std::move(value));
 		}
