@@ -44,7 +44,7 @@ public:
 	{
 		Handle file = { ::CreateFileA(fileName, GENERIC_WRITE, FILE_SHARE_WRITE, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL) };
 		DWORD bytesWritten{ 0 };
-		if (!::WriteFile(file, data.data(), data.size(), &bytesWritten, 0))
+		if (!::WriteFile(file, data.data(), static_cast<DWORD>(data.size()), &bytesWritten, 0))
 		{
 			auto err = GetError();
 			auto msg = std::string("Unable to write data: ") + err.message();

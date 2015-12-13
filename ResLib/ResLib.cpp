@@ -1,38 +1,52 @@
 #include "stdafx.h"
 #include "ResLib.h"
+#include "LibHandle.h"
+
+#include <gsl.h>
 #include <Windows.h>
 #include <system_error>
 #include <sstream>
 #include <memory>
 #include <iterator>
 #include <algorithm>
-#include "LibHandle.h"
 
 using namespace std;
+using Byte = unsigned char;
 
+constexpr inline const char* IntResA(int i)
+{
+    [[suppress(type.1)]] return reinterpret_cast<const char*>(i);
+}
+
+constexpr inline WORD MakeLangId(int p, int s)
+{
+    return static_cast<WORD>(s) << 10 | static_cast<WORD>(p);
+}
+
+[[suppress(type.4), suppress(bounds.1)]]
 const std::map<const std::string, const char*> ResLib::Types =
 {
-	{ "accelerator", MAKEINTRESOURCEA(9) }, // Accelerator table.
-	{ "anicursor", MAKEINTRESOURCEA(21) }, // Animated cursor.
-	{ "aniicon", MAKEINTRESOURCEA(22) }, // Animated icon.
-	{ "bitmap", MAKEINTRESOURCEA(2) }, // Bitmap resource.
-	{ "cursor", MAKEINTRESOURCEA(1) }, // Hardware - dependent cursor resource.
-	{ "dialog", MAKEINTRESOURCEA(5) }, // Dialog box.
-	{ "dlginclude", MAKEINTRESOURCEA(17) }, // Allows a resource editing tool to associate a string with an.rc file.Typically, the string is the name of the header file that provides symbolic names.The resource compiler parses the string but otherwise ignores the value.For example, 1 DLGINCLUDE "MyFile.h"
-	{ "font", MAKEINTRESOURCEA(8) }, // Font resource.
-	{ "fontdir", MAKEINTRESOURCEA(7) }, // Font directory resource.
-	{ "groupcursor", MAKEINTRESOURCEA((ULONG_PTR)(RT_CURSOR)+11) }, // Hardware - independent cursor resource.
-	{ "groupicon", MAKEINTRESOURCEA((ULONG_PTR)(RT_ICON)+11) }, // Hardware - independent icon resource.
-	{ "html", MAKEINTRESOURCEA(23) }, // HTML resource.
-	{ "icon", MAKEINTRESOURCEA(3) }, // Hardware - dependent icon resource.
-	{ "manifest", MAKEINTRESOURCEA(24) }, // Side - by - Side Assembly Manifest.
-	{ "menu", MAKEINTRESOURCEA(4) }, // Menu resource.
-	{ "messagetable", MAKEINTRESOURCEA(11) }, // Message - table entry.
-	{ "plugplay", MAKEINTRESOURCEA(19) }, // Plug and Play resource.
-	{ "rcdata", MAKEINTRESOURCEA(10) }, // Application - defined resource(raw data).
-	{ "string", MAKEINTRESOURCEA(6) }, // String - table entry.
-	{ "version", MAKEINTRESOURCEA(16) }, // Version resource.
-	{ "vxd", MAKEINTRESOURCEA(20) } // VXD.
+    { string("accelerator"), IntResA(9) }, // Accelerator table.
+    { string("anicursor"), IntResA(21) }, // Animated cursor.
+    { string("aniicon"), IntResA(22) }, // Animated icon.
+    { string("bitmap"), IntResA(2) }, // Bitmap resource.
+    { string("cursor"), IntResA(1) }, // Hardware - dependent cursor resource.
+    { string("dialog"), IntResA(5) }, // Dialog box.
+    { string("dlginclude"), IntResA(17) }, // Allows a resource editing tool to associate a string with an.rc file.Typically, the string is the name of the header file that provides symbolic names.The resource compiler parses the string but otherwise ignores the value.For example, 1 DLGINCLUDE "MyFile.h"
+    { string("font"), IntResA(8) }, // Font resource.
+    { string("fontdir"), IntResA(7) }, // Font directory resource.
+    { string("groupcursor"), IntResA(12) }, // Hardware - independent cursor resource.
+    { string("groupicon"), IntResA(14) }, // Hardware - independent icon resource.
+    { string("html"), IntResA(23) }, // HTML resource.
+    { string("icon"), IntResA(3) }, // Hardware - dependent icon resource.
+    { string("manifest"), IntResA(24) }, // Side - by - Side Assembly Manifest.
+    { string("menu"), IntResA(4) }, // Menu resource.
+    { string("messagetable"), IntResA(11) }, // Message - table entry.
+    { string("plugplay"), IntResA(19) }, // Plug and Play resource.
+    { string("rcdata"), IntResA(10) }, // Application - defined resource(raw data).
+    { string("string"), IntResA(6) }, // String - table entry.
+    { string("version"), IntResA(16) }, // Version resource.
+    { string("vxd"), IntResA(20) } // VXD.
 };
 
 static string GetError()
@@ -75,8 +89,8 @@ void ResLib::Write(std::vector<unsigned char> const& data, const char* fileName,
 	if (::UpdateResourceA(
 		targetFileHandle, 
 		resTypePos->second,
-		MAKEINTRESOURCEA(resId), 
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), 
+		IntResA(resId), 
+        MakeLangId(LANG_NEUTRAL, SUBLANG_NEUTRAL),
 		_data.data(), 
 		static_cast<DWORD>(data.size())) == 0)
 	{
@@ -136,8 +150,9 @@ std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resTyp
 		throw InvalidResourceException(msg.str().c_str());
 	}
 
-	auto resData = reinterpret_cast<const char*>(::LockResource(resHandle));
-	if (!resData)
+    [[suppress(type.1)]]
+	auto pResData = reinterpret_cast<Byte*>(::LockResource(resHandle));
+	if (!pResData)
 	{
 		auto err = GetError();
 		stringstream msg;
@@ -145,11 +160,10 @@ std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resTyp
 		throw InvalidResourceException(msg.str().c_str());
 	}
 
-	vector<unsigned char> data;
-	data.reserve(resSize);
-	copy(resData, resData + resSize, back_inserter(data));
+    auto resData = gsl::span<Byte>(pResData, resSize);
+    vector<Byte> data(resData.begin(), resData.end());
 
-	return data;
+    return data;
 }
 
 void ResLib::Copy(const char* fromFile, const char* resType, int fromId, /*int fromLangId, */const char* toFile, int toId/*, int toLangId*/)

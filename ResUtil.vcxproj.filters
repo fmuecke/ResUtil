@@ -12,4 +12,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ResUtil.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
 </Project>
