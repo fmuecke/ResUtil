@@ -13,6 +13,29 @@
 using namespace std;
 using Byte = unsigned char;
 
+const char * const ResLib::TypeId::Accelerator = "accelerator"; // Accelerator table.
+const char * const ResLib::TypeId::Anicursor = "anicursor"; // Animated cursor.
+const char * const ResLib::TypeId::Aniicon = "aniicon"; // Animated icon.
+const char * const ResLib::TypeId::Bitmap = "bitmap"; // Bitmap resource.
+const char * const ResLib::TypeId::Cursor = "cursor"; // Hardware - dependent cursor resource.
+const char * const ResLib::TypeId::Dialog = "dialog"; // Dialog box.
+const char * const ResLib::TypeId::Dlginclude = "dlginclude"; // Allows a resource editing tool to associate a string with an.rc file.Typically, the string is the name of the header file that provides symbolic names.The resource compiler parses the string but otherwise ignores the value.For example, 1 DLGINCLUDE "MyFile.h"
+const char * const ResLib::TypeId::Font = "font"; // Font resource.
+const char * const ResLib::TypeId::Fontdir = "fontdir"; // Font directory resource.
+const char * const ResLib::TypeId::Groupcursor = "groupcursor"; // Hardware - independent cursor resource.
+const char * const ResLib::TypeId::Groupicon = "groupicon"; // Hardware - independent icon resource.
+const char * const ResLib::TypeId::Html = "html"; // HTML resource.
+const char * const ResLib::TypeId::Icon = "icon"; // Hardware - dependent icon resource.
+const char * const ResLib::TypeId::Manifest = "manifest"; // Side - by - Side Assembly Manifest.
+const char * const ResLib::TypeId::Menu = "menu"; // Menu resource.
+const char * const ResLib::TypeId::Messagetable = "messagetable"; // Message - table entry.
+const char * const ResLib::TypeId::Plugplay = "plugplay"; // Plug and Play resource.
+const char * const ResLib::TypeId::Rcdata = "rcdata"; // Application - defined resource(raw data).
+const char * const ResLib::TypeId::String = "string"; // String - table entry.
+const char * const ResLib::TypeId::Version = "version"; // Version resource.
+const char * const ResLib::TypeId::Vxd = "vxd"; // VXD.
+
+
 constexpr inline const char* IntResA(int i)
 {
     [[suppress(type.1)]] return reinterpret_cast<const char*>(i);
@@ -26,27 +49,27 @@ constexpr inline WORD MakeLangId(int p, int s)
 [[suppress(type.4), suppress(bounds.1)]]
 const std::map<const std::string, const char*> ResLib::Types =
 {
-    { string("accelerator"), IntResA(9) }, // Accelerator table.
-    { string("anicursor"), IntResA(21) }, // Animated cursor.
-    { string("aniicon"), IntResA(22) }, // Animated icon.
-    { string("bitmap"), IntResA(2) }, // Bitmap resource.
-    { string("cursor"), IntResA(1) }, // Hardware - dependent cursor resource.
-    { string("dialog"), IntResA(5) }, // Dialog box.
-    { string("dlginclude"), IntResA(17) }, // Allows a resource editing tool to associate a string with an.rc file.Typically, the string is the name of the header file that provides symbolic names.The resource compiler parses the string but otherwise ignores the value.For example, 1 DLGINCLUDE "MyFile.h"
-    { string("font"), IntResA(8) }, // Font resource.
-    { string("fontdir"), IntResA(7) }, // Font directory resource.
-    { string("groupcursor"), IntResA(12) }, // Hardware - independent cursor resource.
-    { string("groupicon"), IntResA(14) }, // Hardware - independent icon resource.
-    { string("html"), IntResA(23) }, // HTML resource.
-    { string("icon"), IntResA(3) }, // Hardware - dependent icon resource.
-    { string("manifest"), IntResA(24) }, // Side - by - Side Assembly Manifest.
-    { string("menu"), IntResA(4) }, // Menu resource.
-    { string("messagetable"), IntResA(11) }, // Message - table entry.
-    { string("plugplay"), IntResA(19) }, // Plug and Play resource.
-    { string("rcdata"), IntResA(10) }, // Application - defined resource(raw data).
-    { string("string"), IntResA(6) }, // String - table entry.
-    { string("version"), IntResA(16) }, // Version resource.
-    { string("vxd"), IntResA(20) } // VXD.
+    { TypeId::Accelerator, IntResA(9) }, // Accelerator table.
+    { TypeId::Anicursor, IntResA(21) }, // Animated cursor.
+    { TypeId::Aniicon, IntResA(22) }, // Animated icon.
+    { TypeId::Bitmap, IntResA(2) }, // Bitmap resource.
+    { TypeId::Cursor, IntResA(1) }, // Hardware - dependent cursor resource.
+    { TypeId::Dialog, IntResA(5) }, // Dialog box.
+    { TypeId::Dlginclude, IntResA(17) }, // Allows a resource editing tool to associate a string with an.rc file.Typically, the string is the name of the header file that provides symbolic names.The resource compiler parses the string but otherwise ignores the value.For example, 1 DLGINCLUDE "MyFile.h"
+    { TypeId::Font, IntResA(8) }, // Font resource.
+    { TypeId::Fontdir, IntResA(7) }, // Font directory resource.
+    { TypeId::Groupcursor, IntResA(12) }, // Hardware - independent cursor resource.
+    { TypeId::Groupicon, IntResA(14) }, // Hardware - independent icon resource.
+    { TypeId::Html, IntResA(23) }, // HTML resource.
+    { TypeId::Icon, IntResA(3) }, // Hardware - dependent icon resource.
+    { TypeId::Manifest, IntResA(24) }, // Side - by - Side Assembly Manifest.
+    { TypeId::Menu, IntResA(4) }, // Menu resource.
+    { TypeId::Messagetable, IntResA(11) }, // Message - table entry.
+    { TypeId::Plugplay, IntResA(19) }, // Plug and Play resource.
+    { TypeId::Rcdata, IntResA(10) }, // Application - defined resource(raw data).
+    { TypeId::String, IntResA(6) }, // String - table entry.
+    { TypeId::Version, IntResA(16) }, // Version resource.
+    { TypeId::Vxd, IntResA(20) } // VXD.
 };
 
 static string GetError()
