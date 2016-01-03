@@ -211,3 +211,9 @@ GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
 *.opendb
+*.lib
+*.tlog
+*.pchast
+*.idb
+*.ipdb
+*.iobj
