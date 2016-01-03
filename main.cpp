@@ -2,7 +2,7 @@
 #include "Handle.hpp"
 #include "CmdArgs.hpp"
 #include "CmdArgsParser.hpp"
-#include "ResLib\ResLib.h"
+#include "ResLib/ResLib.hpp"
 #include "ResUtil.h"
 #include <iostream>
 #include <memory>
