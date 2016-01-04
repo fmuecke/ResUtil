@@ -83,8 +83,8 @@ public:
 		InvalidResourceException(std::string const& msg) : ResLibException(msg) {}
 	};
 
-	static void Write(std::vector<unsigned char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/);
-	static std::vector<unsigned char> Read(const char* fileName, const char* resType, int resId/*, int langId*/);
+	static void Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/);
+	static std::vector<char> Read(const char* fileName, const char* resType, int resId/*, int langId*/);
 	static void Copy(const char* fromFile, const char* resType, int fromId/*, int fromLangId*/, const char* toFile, int toId/*, int toLangId*/);
 	static const std::map<const std::string, const char*> Types;
 
@@ -162,7 +162,7 @@ ResLib::ResLib()
 ResLib::~ResLib()
 {}
 
-void ResLib::Write(std::vector<unsigned char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/)
+void ResLib::Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/)
 {
     if (data.empty()) throw InvalidDataException();
     if (!fileName | !resType) throw ArgumentNullException();
@@ -205,7 +205,7 @@ void ResLib::Write(std::vector<unsigned char> const& data, const char* fileName,
     }
 }
 
-std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resType, int resId/*, int langId*/)
+std::vector<char> ResLib::Read(const char* fileName, const char* resType, int resId/*, int langId*/)
 {
     if (!fileName | !resType) throw ArgumentNullException();
     auto resTypePos = Types.find(resType);
@@ -248,7 +248,7 @@ std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resTyp
     }
 
     [[suppress(type.1)]]
-    auto pResData = reinterpret_cast<Byte*>(::LockResource(resHandle));
+    auto pResData = reinterpret_cast<char*>(::LockResource(resHandle));
     if (!pResData)
     {
         auto err = GetError();
@@ -257,8 +257,7 @@ std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resTyp
         throw InvalidResourceException(msg.str().c_str());
     }
 
-    std::vector<Byte> data(pResData, pResData + resSize);
-
+    std::vector<char> data(pResData, pResData + resSize);
     return data;
 }
 

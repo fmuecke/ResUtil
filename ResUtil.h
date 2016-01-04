@@ -19,7 +19,7 @@ public:
 	ResUtil();
 	~ResUtil();
 
-	static std::vector<unsigned char> ReadData(const char* fileName)
+	static std::vector<char> ReadData(const char* fileName)
 	{
 		Handle file = { ::CreateFileA(fileName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL) };
 		if (!file.IsValid())
@@ -29,7 +29,7 @@ public:
 		}
 
 		DWORD size = ::GetFileSize(file, nullptr);
-		auto data = std::vector<unsigned char>(size, 0x00);
+		auto data = std::vector<char>(size, 0x00);
 		if (0 == ::ReadFile(file, data.data(), static_cast<DWORD>(data.size()), &size, nullptr))
 		{
 			auto err = GetError();
@@ -40,7 +40,7 @@ public:
 		return data;
 	}
 
-	static void WriteData(std::vector<unsigned char> const& data, const char* fileName)
+	static void WriteData(std::vector<char> const& data, const char* fileName)
 	{
 		Handle file = { ::CreateFileA(fileName, GENERIC_WRITE, FILE_SHARE_WRITE, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL) };
 		DWORD bytesWritten{ 0 };
