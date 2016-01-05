@@ -99,7 +99,7 @@ private:
 
     static constexpr inline const char* IntResA(int i)
     {
-        [[suppress(type.1)]] return reinterpret_cast<const char*>(i);
+        [[suppress(type.1)]] return reinterpret_cast<const char*>(static_cast<INT_PTR>(i));
     }
 
     static constexpr inline WORD MakeLangId(int p, int s)
