@@ -13,6 +13,7 @@
 #include <system_error>
 #include <map>
 #include <Windows.h>
+#include "main.h"
 
 using namespace std;
 
@@ -38,7 +39,14 @@ int main(int argc, char** argv)
 		//{ "lang", "the language id" }
 	} });
 
-	argsParser.Add({ "copy", "copy a resource from one file to another",
+    argsParser.Add({ "enum", "enumerate resources of a given type",
+    {
+        { "in", "the source file" },
+        { "type", "the type of the resouces (see below)" },
+        //{ "lang", "the language id" }
+    } });
+
+    argsParser.Add({ "copy", "copy a resource from one file to another",
 	{
 		{ "in", "the source file" },
 		{ "out", "the target file" },
@@ -105,6 +113,17 @@ int main(int argc, char** argv)
 		{
 			throw std::exception("NOT IMPLEMENTED");
 		}
+        else if (argsParser.GetCommand() == "enum")
+        {
+            auto data = ResLib::Enum(
+                argsParser.GetValue("in").c_str(),
+                argsParser.GetValue("type").c_str());
+            
+            for (auto i : data)
+            {
+                cout << i << "\n";
+            }
+        }
 		else
 		{
 			cerr << argsParser.HelpText();

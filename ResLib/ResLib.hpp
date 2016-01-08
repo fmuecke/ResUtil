@@ -86,6 +86,7 @@ public:
 	static void Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/);
 	static std::vector<char> Read(const char* fileName, const char* resType, int resId/*, int langId*/);
 	static void Copy(const char* fromFile, const char* resType, int fromId/*, int fromLangId*/, const char* toFile, int toId/*, int toLangId*/);
+    static std::vector<int> Enum(const char* fileName, const char* resType);
 	static const std::map<const std::string, const char*> Types;
 
 private:
@@ -216,7 +217,7 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
     if (!dll.IsValid())
     {
         std::stringstream msg;
-        msg << "Unable to open file '" << fileName << std::endl;
+        msg << "Unable to open file '" << fileName << "'" << std::endl;
         throw InvalidFileException(msg.str().c_str());
     }
 
@@ -267,3 +268,29 @@ void ResLib::Copy(const char* fromFile, const char* resType, int fromId, /*int f
     Write(data, toFile, resType, toId);
 }
 
+std::vector<int> ResLib::Enum(const char* fileName, const char* resType)
+{
+    if (!fileName | !resType) throw ArgumentNullException();
+    auto resTypePos = Types.find(resType);
+    if (resTypePos == Types.end()) throw InvalidTypeException(resType);
+
+    auto dll = LibHandle(fileName);
+    if (!dll.IsValid())
+    {
+        std::stringstream msg;
+        msg << "Unable to open file '" << fileName << "'" << std::endl;
+        throw InvalidFileException(msg.str().c_str());
+    }
+
+    std::vector<int> data;
+
+    ::EnumResourceNamesA(dll.handle, resTypePos->second, [](HMODULE hModule, LPCSTR lpszType, LPSTR lpszName, LONG_PTR lParam) -> BOOL
+    {
+        auto data = reinterpret_cast<std::vector<int>*>(lParam);
+        data->emplace_back((int)lpszName);
+        return true;
+    }, 
+        reinterpret_cast<LONG_PTR>(&data));
+
+    return data;
+}
