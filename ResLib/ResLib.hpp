@@ -284,10 +284,10 @@ std::vector<int> ResLib::Enum(const char* fileName, const char* resType)
 
     std::vector<int> data;
 
-    ::EnumResourceNamesA(dll.handle, resTypePos->second, [](HMODULE hModule, LPCSTR lpszType, LPSTR lpszName, LONG_PTR lParam) -> BOOL
+    ::EnumResourceNamesA(dll.handle, resTypePos->second, [](HMODULE /*hModule*/, LPCSTR /*lpszType*/, LPSTR lpszName, LONG_PTR lParam) -> BOOL
     {
         auto data = reinterpret_cast<std::vector<int>*>(lParam);
-        data->emplace_back((int)lpszName);
+        data->emplace_back(reinterpret_cast<int>(lpszName));
         return true;
     }, 
         reinterpret_cast<LONG_PTR>(&data));
