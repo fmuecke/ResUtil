@@ -1,6 +1,6 @@
 #pragma once
 
-#include "LibHandle.h"
+#include "DataLibHandle.h"
 
 #include <Windows.h>
 #include <system_error>
@@ -213,7 +213,7 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
     if (resTypePos == Types.end()) throw InvalidTypeException(resType);
     if (resId < 0 /*|| langId < 0*/) throw InvalidArgsException();
 
-    auto dll = LibHandle(fileName);
+    auto dll = DataLibHandle(fileName);
     if (!dll.IsValid())
     {
         std::stringstream msg;
@@ -274,7 +274,7 @@ std::vector<int> ResLib::Enum(const char* fileName, const char* resType)
     auto resTypePos = Types.find(resType);
     if (resTypePos == Types.end()) throw InvalidTypeException(resType);
 
-    auto dll = LibHandle(fileName);
+    auto dll = DataLibHandle(fileName);
     if (!dll.IsValid())
     {
         std::stringstream msg;
