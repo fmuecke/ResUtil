@@ -17,9 +17,9 @@ class ResLib
 {
 public:
     using Byte = unsigned char;
-	
+    
     ResLib();
-	~ResLib();
+    ~ResLib();
 
     struct TypeId
     {
@@ -46,48 +46,49 @@ public:
         static const char * const Vxd; // VXD.
     };
 
-	struct ResLibException : public std::exception
-	{
-		ResLibException(std::string const& msg) 
-			: std::exception()
-			, _msg {msg}
-		{}
+    struct ResLibException : public std::exception
+    {
+        ResLibException(std::string const& msg) 
+            : std::exception()
+            , _msg {msg}
+        {}
 
-		virtual const char* what() const override { return _msg.c_str(); }
+        virtual const char* what() const override { return _msg.c_str(); }
 
-	private:
-		std::string _msg;
-	};
+    private:
+        std::string _msg;
+    };
 
-	struct InvalidArgsException : public std::exception {};
-	struct ArgumentNullException : public std::exception {};
-	struct InvalidDataException : public std::exception {};
+    struct InvalidArgsException : public std::exception {};
+    struct ArgumentNullException : public std::exception {};
+    struct InvalidDataException : public std::exception {};
 
-	struct InvalidFileException : public ResLibException
-	{
-		InvalidFileException(std::string const& msg) : ResLibException(msg) {}
-	};
+    struct InvalidFileException : public ResLibException
+    {
+        InvalidFileException(std::string const& msg) : ResLibException(msg) {}
+    };
 
-	struct InvalidTypeException : public ResLibException
-	{
-		InvalidTypeException(const char* type) : ResLibException(std::string("The type is not valid: ").append(type)) {}
-	};
+    struct InvalidTypeException : public ResLibException
+    {
+        InvalidTypeException(const char* type) : ResLibException(std::string("The type is not valid: ").append(type)) {}
+    };
 
-	struct UpdateResourceException : public ResLibException
-	{
-		UpdateResourceException(std::string const& msg) : ResLibException(msg) {}
-	};
+    struct UpdateResourceException : public ResLibException
+    {
+        UpdateResourceException(std::string const& msg) : ResLibException(msg) {}
+    };
 
-	struct InvalidResourceException : public ResLibException
-	{
-		InvalidResourceException(std::string const& msg) : ResLibException(msg) {}
-	};
+    struct InvalidResourceException : public ResLibException
+    {
+        InvalidResourceException(std::string const& msg) : ResLibException(msg) {}
+    };
 
-	static void Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/);
-	static std::vector<char> Read(const char* fileName, const char* resType, int resId/*, int langId*/);
-	static void Copy(const char* fromFile, const char* resType, int fromId/*, int fromLangId*/, const char* toFile, int toId/*, int toLangId*/);
+    static void Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/);
+    static std::vector<char> Read(const char* fileName, const char* resType, int resId/*, int langId*/);
+    static void Copy(const char* fromFile, const char* resType, int fromId/*, int fromLangId*/, const char* toFile, int toId/*, int toLangId*/);
     static std::vector<int> Enum(const char* fileName, const char* resType);
-	static const std::map<const std::string, const char*> Types;
+    static std::vector<int> EnumerateLanguages(const char* fileName, const char* resType);
+    static const std::map<const std::string, const char*> Types;
 
 private:
     static std::string GetError()

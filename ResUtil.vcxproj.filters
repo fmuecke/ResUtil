@@ -6,6 +6,8 @@
     <ClInclude Include="CmdArgs.hpp" />
     <ClInclude Include="CmdArgsParser.hpp" />
     <ClInclude Include="ResUtil.h" />
+    <ClInclude Include="ResLib\DataLibHandle.h" />
+    <ClInclude Include="ResLib\ResLib.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp" />

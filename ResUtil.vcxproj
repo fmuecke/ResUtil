@@ -84,6 +84,8 @@
     <ClInclude Include="CmdArgs.hpp" />
     <ClInclude Include="CmdArgsParser.hpp" />
     <ClInclude Include="Handle.hpp" />
+    <ClInclude Include="ResLib\DataLibHandle.h" />
+    <ClInclude Include="ResLib\ResLib.hpp" />
     <ClInclude Include="ResUtil.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
