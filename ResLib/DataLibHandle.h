@@ -3,7 +3,7 @@
 
 struct DataLibHandle
 {
-	DataLibHandle(const char* fileName) : handle{ ::LoadLibraryExA(fileName, 0, LOAD_LIBRARY_AS_DATAFILE|DONT_RESOLVE_DLL_REFERENCES) } {}
+	DataLibHandle(const char* fileName) : handle{ ::LoadLibraryExA(fileName, 0, LOAD_LIBRARY_AS_DATAFILE|LOAD_LIBRARY_AS_IMAGE_RESOURCE) } {}
 	~DataLibHandle() { if (IsValid()) ::FreeLibrary(handle); }
 	bool IsValid() const { return handle != 0; }
 
