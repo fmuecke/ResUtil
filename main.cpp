@@ -16,7 +16,7 @@
 
 using namespace std;
 
-int main(int argc, char** argv)
+int wmain(int argc, wchar_t** argv)
 {
     CmdArgsParser argsParser{ "ResUtil v0.3 (c) 2015 Florian Muecke" };
 

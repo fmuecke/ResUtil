@@ -1,5 +1,6 @@
 #pragma once
 #include "Handle.hpp"
+#include "Utf8.hpp"
 #include <iostream>
 #include <vector>
 #include <system_error>
@@ -21,7 +22,7 @@ public:
 
 	static std::vector<char> ReadData(const char* fileName)
 	{
-		Handle file = { ::CreateFileA(fileName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL) };
+		Handle file = { ::CreateFileW(Utf8::ToWide(fileName).c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL) };
 		if (!file.IsValid())
 		{
 			auto msg = std::string("Unable to open target file: ") + GetError().message();
@@ -42,7 +43,7 @@ public:
 
 	static void WriteData(std::vector<char> const& data, const char* fileName)
 	{
-		Handle file = { ::CreateFileA(fileName, GENERIC_WRITE, FILE_SHARE_WRITE, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL) };
+		Handle file = { ::CreateFileW(Utf8::ToWide(fileName).c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL) };
 		DWORD bytesWritten{ 0 };
 		if (!::WriteFile(file, data.data(), static_cast<DWORD>(data.size()), &bytesWritten, 0))
 		{
@@ -57,6 +58,5 @@ private:
 	{
 		return std::error_code(::GetLastError(), std::system_category());
 	}
-
 };
 

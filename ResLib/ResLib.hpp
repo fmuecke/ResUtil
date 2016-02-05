@@ -12,6 +12,7 @@
 #include <map>
 #include <string>
 #include <exception>
+#include "..\Utf8.hpp"
 
 class ResLib
 {
@@ -88,7 +89,7 @@ public:
     static void Copy(const char* fromFile, const char* resType, int fromId/*, int fromLangId*/, const char* toFile, int toId/*, int toLangId*/);
     static std::vector<int> Enum(const char* fileName, const char* resType);
     static std::vector<int> EnumerateLanguages(const char* fileName, const char* resType);
-    static const std::map<const std::string, const char*> Types;
+    static const std::map<const std::string, const wchar_t*> Types;
 
 private:
     static std::string GetError()
@@ -99,9 +100,9 @@ private:
         return msg.empty() ? "code = " + std::to_string(err.value()) + ")\n" : msg;
     }
 
-    static constexpr inline const char* IntResA(int i)
+    static constexpr inline const wchar_t* IntResW(int i)
     {
-        [[suppress(type.1)]] return reinterpret_cast<const char*>(static_cast<INT_PTR>(i));
+        [[suppress(type.1)]] return reinterpret_cast<const wchar_t*>(static_cast<INT_PTR>(i));
     }
 
     static constexpr inline WORD MakeLangId(int p, int s)
@@ -133,29 +134,29 @@ const char * const ResLib::TypeId::Version = "version"; // Version resource.
 const char * const ResLib::TypeId::Vxd = "vxd"; // VXD.
 
 [[suppress(type.4), suppress(bounds.1)]]
-const std::map<const std::string, const char*> ResLib::Types =
+const std::map<const std::string, const wchar_t*> ResLib::Types =
 {
-    { TypeId::Accelerator, IntResA(9) }, // Accelerator table.
-    { TypeId::Anicursor, IntResA(21) }, // Animated cursor.
-    { TypeId::Aniicon, IntResA(22) }, // Animated icon.
-    { TypeId::Bitmap, IntResA(2) }, // Bitmap resource.
-    { TypeId::Cursor, IntResA(1) }, // Hardware - dependent cursor resource.
-    { TypeId::Dialog, IntResA(5) }, // Dialog box.
-    { TypeId::Dlginclude, IntResA(17) }, // Allows a resource editing tool to associate a string with an.rc file.Typically, the string is the name of the header file that provides symbolic names.The resource compiler parses the string but otherwise ignores the value.For example, 1 DLGINCLUDE "MyFile.h"
-    { TypeId::Font, IntResA(8) }, // Font resource.
-    { TypeId::Fontdir, IntResA(7) }, // Font directory resource.
-    { TypeId::Groupcursor, IntResA(12) }, // Hardware - independent cursor resource.
-    { TypeId::Groupicon, IntResA(14) }, // Hardware - independent icon resource.
-    { TypeId::Html, IntResA(23) }, // HTML resource.
-    { TypeId::Icon, IntResA(3) }, // Hardware - dependent icon resource.
-    { TypeId::Manifest, IntResA(24) }, // Side - by - Side Assembly Manifest.
-    { TypeId::Menu, IntResA(4) }, // Menu resource.
-    { TypeId::Messagetable, IntResA(11) }, // Message - table entry.
-    { TypeId::Plugplay, IntResA(19) }, // Plug and Play resource.
-    { TypeId::Rcdata, IntResA(10) }, // Application - defined resource(raw data).
-    { TypeId::String, IntResA(6) }, // String - table entry.
-    { TypeId::Version, IntResA(16) }, // Version resource.
-    { TypeId::Vxd, IntResA(20) } // VXD.
+    { TypeId::Accelerator, IntResW(9) }, // Accelerator table.
+    { TypeId::Anicursor, IntResW(21) }, // Animated cursor.
+    { TypeId::Aniicon, IntResW(22) }, // Animated icon.
+    { TypeId::Bitmap, IntResW(2) }, // Bitmap resource.
+    { TypeId::Cursor, IntResW(1) }, // Hardware - dependent cursor resource.
+    { TypeId::Dialog, IntResW(5) }, // Dialog box.
+    { TypeId::Dlginclude, IntResW(17) }, // Allows a resource editing tool to associate a string with an.rc file.Typically, the string is the name of the header file that provides symbolic names.The resource compiler parses the string but otherwise ignores the value.For example, 1 DLGINCLUDE "MyFile.h"
+    { TypeId::Font, IntResW(8) }, // Font resource.
+    { TypeId::Fontdir, IntResW(7) }, // Font directory resource.
+    { TypeId::Groupcursor, IntResW(12) }, // Hardware - independent cursor resource.
+    { TypeId::Groupicon, IntResW(14) }, // Hardware - independent icon resource.
+    { TypeId::Html, IntResW(23) }, // HTML resource.
+    { TypeId::Icon, IntResW(3) }, // Hardware - dependent icon resource.
+    { TypeId::Manifest, IntResW(24) }, // Side - by - Side Assembly Manifest.
+    { TypeId::Menu, IntResW(4) }, // Menu resource.
+    { TypeId::Messagetable, IntResW(11) }, // Message - table entry.
+    { TypeId::Plugplay, IntResW(19) }, // Plug and Play resource.
+    { TypeId::Rcdata, IntResW(10) }, // Application - defined resource(raw data).
+    { TypeId::String, IntResW(6) }, // String - table entry.
+    { TypeId::Version, IntResW(16) }, // Version resource.
+    { TypeId::Vxd, IntResW(20) } // VXD.
 };
 
 ResLib::ResLib()
@@ -185,10 +186,10 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
 
     while (_data.size() % 8) _data.emplace_back(0x00);  // data must be aligned
 
-    if (::UpdateResourceA(
+    if (::UpdateResourceW(
         targetFileHandle,
         resTypePos->second,
-        IntResA(resId),
+        IntResW(resId),
         ResLib::MakeLangId(LANG_NEUTRAL, SUBLANG_NEUTRAL),
         _data.data(),
         static_cast<DWORD>(data.size())) == 0)
@@ -198,7 +199,7 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
         msg << "Updating resource failed: " << err << std::endl;
         throw UpdateResourceException(msg.str().c_str());
     }
-    if (::EndUpdateResourceA(targetFileHandle, false) == 0)
+    if (::EndUpdateResourceW(targetFileHandle, false) == 0)
     {
         auto err = GetError();
         std::stringstream msg;
@@ -222,7 +223,7 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
         throw InvalidFileException(msg.str().c_str());
     }
 
-    auto resInfo = ::FindResourceA(dll.handle, MAKEINTRESOURCEA(resId), resTypePos->second);
+    auto resInfo = ::FindResourceW(dll.handle, MAKEINTRESOURCEW(resId), resTypePos->second);
     if (!resInfo)
     {
         auto err = GetError();
@@ -285,7 +286,8 @@ std::vector<int> ResLib::Enum(const char* fileName, const char* resType)
 
     std::vector<int> data;
 
-    ::EnumResourceNamesA(dll.handle, resTypePos->second, [](HMODULE /*hModule*/, LPCSTR /*lpszType*/, LPSTR lpszName, LONG_PTR lParam) -> BOOL
+    ::EnumResourceNamesW(dll.handle, resTypePos->second, 
+        [](HMODULE /*hModule*/, LPCWSTR /*lpszType*/, LPWSTR lpszName, LONG_PTR lParam) -> BOOL
     {
         auto data = reinterpret_cast<std::vector<int>*>(lParam);
         data->emplace_back(reinterpret_cast<int>(lpszName));

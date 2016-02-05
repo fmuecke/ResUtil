@@ -1,8 +1,10 @@
 #pragma once
+#include "Utf8.hpp"
 #include <string>
 #include <vector>
 #include <map>
 #include <sstream>
+#include <algorithm>
 
 #ifndef RANGE
 #define RANGE(c)	cbegin(c), cend(c)
@@ -77,12 +79,20 @@ public:
 		_additionalHelp.emplace_back(std::move(s));
 	}
 
-	void Parse(int argc, char** argv)
+	void Parse(int argc, wchar_t** argv)
 	{
-		auto args = std::vector<std::string>(argv, argv + argc);
+        auto args = std::vector<std::string>();
+        for (int i = 0; i < argc; ++i)
+        {
+            args.emplace_back(Utf8::FromWide(argv[i]));
+        }
 
 		// find command in args
-		auto pos = std::find_first_of(RANGE(args), RANGE(_commands), [](std::string const& s, CommandSet const& c) { return c.command == s; });
+		auto pos = std::find_first_of(RANGE(args), RANGE(_commands), 
+            [](std::string const& s, CommandSet const& c) 
+        { 
+            return c.command == s; 
+        });
 		if (pos == cend(args))
 		{
 			throw ParseException("\nerror: no command specified\n");
