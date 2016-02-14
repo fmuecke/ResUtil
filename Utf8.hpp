@@ -19,7 +19,7 @@ namespace Utf8
 
             if (!str) return std::wstring();
 
-            auto strLen = strlen(str); // does not include null
+            auto strLen = static_cast<int>(strlen(str)); // does not include null
             auto requiredLen = ::MultiByteToWideChar(static_cast<int>(inputCp), 0, str, strLen, nullptr, 0);
             if (requiredLen == 0)
             {
@@ -44,7 +44,7 @@ namespace Utf8
             static_assert(sizeof(wchar_t) == 2, "only UTF-16 wide strings supported!");
 
             if (!utf16Str) return std::string();
-            auto strLen = wcslen(utf16Str); // does not include null
+            auto strLen = static_cast<int>(wcslen(utf16Str)); // does not include null
             auto requiredLen = ::WideCharToMultiByte(static_cast<int>(outputCp), 0, utf16Str, strLen, nullptr, 0, nullptr, nullptr);
             if (requiredLen == 0)
             {
@@ -70,9 +70,19 @@ namespace Utf8
         return _internal::from_wide(utf16Str, _internal::CodePage::Utf8);
     }
 
+    static inline std::string FromWide(const std::wstring& utf16Str)
+    {
+        return FromWide(utf16Str.c_str());
+    }
+
     static inline std::wstring ToWide(const char* utf8Str)
     {
         return _internal::to_wide(utf8Str, _internal::CodePage::Utf8);
+    }
+
+    static inline std::wstring ToWide(const std::string& utf8Str)
+    {
+        return ToWide(utf8Str.c_str());
     }
 
     static inline std::wstring AnsiToWide(const char* ansiStr)
