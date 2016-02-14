@@ -72,6 +72,7 @@ namespace Utf8
 
     static inline std::string FromWide(const std::wstring& utf16Str)
     {
+        if (utf16Str.empty()) return std::string();
         return FromWide(utf16Str.c_str());
     }
 
@@ -82,6 +83,7 @@ namespace Utf8
 
     static inline std::wstring ToWide(const std::string& utf8Str)
     {
+        if (utf8Str.empty()) return std::wstring();
         return ToWide(utf8Str.c_str());
     }
 
