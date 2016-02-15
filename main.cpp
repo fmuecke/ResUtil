@@ -101,12 +101,13 @@ int wmain(int argc, wchar_t** argv)
         }
         else if (argsParser.GetCommand() == "read")
         {
-            auto data = ResLib::Read(
+            auto result = ResLib::Read(
                 argsParser.GetValue("in").c_str(),
                 argsParser.GetValue("type").c_str(),
                 stoi(argsParser.GetValue("id")));
 
-            ResUtil::WriteData(data, argsParser.GetValue("out").c_str());
+            if (!result) throw std::runtime_error(result.Message());
+            ResUtil::WriteData(result.Get(), argsParser.GetValue("out").c_str());
         }
         else if (argsParser.GetCommand() == "clone")
         {
@@ -114,11 +115,13 @@ int wmain(int argc, wchar_t** argv)
         }
         else if (argsParser.GetCommand() == "enum")
         {
-            auto data = ResLib::Enum(
+            auto result = ResLib::Enum(
                 argsParser.GetValue("in").c_str(),
                 argsParser.GetValue("type").c_str());
             
-            for (auto i : data)
+            if (!result) throw std::runtime_error(result.Message());
+
+            for (auto i : result.Get())
             {
                 cout << i << "\n";
             }

@@ -13,6 +13,7 @@
 #include <string>
 #include <exception>
 #include "..\Utf8.hpp"
+#include "..\Result.hpp"
 
 class ResLib
 {
@@ -47,48 +48,11 @@ public:
         static const char * const Vxd; // VXD.
     };
 
-    struct ResLibException : public std::exception
-    {
-        ResLibException(std::string const& msg) 
-            : std::exception()
-            , _msg {msg}
-        {}
-
-        virtual const char* what() const override { return _msg.c_str(); }
-
-    private:
-        std::string _msg;
-    };
-
-    struct InvalidArgsException : public std::exception {};
-    struct ArgumentNullException : public std::exception {};
-    struct InvalidDataException : public std::exception {};
-
-    struct InvalidFileException : public ResLibException
-    {
-        InvalidFileException(std::string const& msg) : ResLibException(msg) {}
-    };
-
-    struct InvalidTypeException : public ResLibException
-    {
-        InvalidTypeException(const char* type) : ResLibException(std::string("The type is not valid: ").append(type)) {}
-    };
-
-    struct UpdateResourceException : public ResLibException
-    {
-        UpdateResourceException(std::string const& msg) : ResLibException(msg) {}
-    };
-
-    struct InvalidResourceException : public ResLibException
-    {
-        InvalidResourceException(std::string const& msg) : ResLibException(msg) {}
-    };
-
-    static void Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/);
-    static std::vector<char> Read(const char* fileName, const char* resType, int resId/*, int langId*/);
-    static void Copy(const char* fromFile, const char* resType, int fromId/*, int fromLangId*/, const char* toFile, int toId/*, int toLangId*/);
-    static std::vector<int> Enum(const char* fileName, const char* resType);
-    static std::vector<int> EnumerateLanguages(const char* fileName, const char* resType);
+    static Result<void> Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/) noexcept;
+    static Result<std::vector<char>> Read(const char* fileName, const char* resType, int resId/*, int langId*/) noexcept;
+    static Result<void> Copy(const char* fromFile, const char* resType, int fromId/*, int fromLangId*/, const char* toFile, int toId/*, int toLangId*/) noexcept;
+    static Result<std::vector<int>> Enum(const char* fileName, const char* resType) noexcept;
+    static Result<std::vector<int>> EnumerateLanguages(const char* fileName, const char* resType) noexcept;
     static const std::map<const std::string, const wchar_t*> Types;
 
 private:
@@ -165,13 +129,13 @@ ResLib::ResLib()
 ResLib::~ResLib()
 {}
 
-void ResLib::Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/)
+Result<void> ResLib::Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/) noexcept
 {
-    if (data.empty()) throw InvalidDataException();
-    if (!fileName | !resType) throw ArgumentNullException();
-    if (resId < 0 /*|| langId < 0*/) throw InvalidArgsException();
+    if (data.empty()) return Result<void>::ErrorInvalidData();
+    if (!fileName | !resType)  return Result<void>::ErrorArgumentNull();
+    if (resId < 0 /*|| langId < 0*/)  return Result<void>::ErrorInvalidArgs();
     auto resTypePos = Types.find(resType);
-    if (resTypePos == Types.end()) throw InvalidTypeException(resType);
+    if (resTypePos == Types.end()) return Result<void>::ErrorInvalidType(resType);
 
     auto targetFileHandle = ::BeginUpdateResourceA(fileName, FALSE);
     if (targetFileHandle == NULL)
@@ -179,7 +143,7 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
         auto err = GetError();
         std::stringstream msg;
         msg << "Opening file '" << fileName << "' failed: " << err << std::endl;
-        throw InvalidFileException(msg.str().c_str());
+        return Result<void>(msg.str());
     }
 
     auto _data = data;
@@ -197,30 +161,32 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
         auto err = GetError();
         std::stringstream msg;
         msg << "Updating resource failed: " << err << std::endl;
-        throw UpdateResourceException(msg.str().c_str());
+        return Result<void>(msg.str());
     }
     if (::EndUpdateResourceW(targetFileHandle, false) == 0)
     {
         auto err = GetError();
         std::stringstream msg;
         msg << "Resource update could not be written: " << err << std::endl;
-        throw UpdateResourceException(msg.str().c_str());
+        return Result<void>(msg.str());
     }
+
+    return Result<void>{};
 }
 
-std::vector<char> ResLib::Read(const char* fileName, const char* resType, int resId/*, int langId*/)
+Result<std::vector<char>> ResLib::Read(const char* fileName, const char* resType, int resId/*, int langId*/) noexcept
 {
-    if (!fileName | !resType) throw ArgumentNullException();
+    using R = Result<std::vector<char>>;
+
+    if (!fileName | !resType) return R::ErrorInvalidArgs();
     auto resTypePos = Types.find(resType);
-    if (resTypePos == Types.end()) throw InvalidTypeException(resType);
-    if (resId < 0 /*|| langId < 0*/) throw InvalidArgsException();
+    if (resTypePos == Types.end()) return R::ErrorInvalidType(resType);
+    if (resId < 0 /*|| langId < 0*/) return R::ErrorInvalidArgs();
 
     auto dll = DataLibHandle(fileName);
     if (!dll.IsValid())
     {
-        std::stringstream msg;
-        msg << "Unable to open file '" << fileName << "'" << std::endl;
-        throw InvalidFileException(msg.str().c_str());
+        return R::ErrorInvalidFile(fileName);
     }
 
     auto resInfo = ::FindResourceW(dll.handle, MAKEINTRESOURCEW(resId), resTypePos->second);
@@ -229,7 +195,7 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
         auto err = GetError();
         std::stringstream msg;
         msg << "Finding resouce with id=" << resId << " in file '" << fileName << "' failed: " << err << std::endl;
-        throw InvalidResourceException(msg.str().c_str());
+        return R(msg.str());
     }
 
     auto resSize = ::SizeofResource(dll.handle, resInfo);
@@ -238,7 +204,7 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
         auto err = GetError();
         std::stringstream msg;
         msg << "Error getting size of resource with id=" << resId << " in file '" << fileName << "': " << err << std::endl;
-        throw InvalidResourceException(msg.str().c_str());
+        return R(msg.str());
     }
 
     auto resHandle = ::LoadResource(dll.handle, resInfo);
@@ -247,7 +213,7 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
         auto err = GetError();
         std::stringstream msg;
         msg << "Error loading resource id=" << resId << " in file '" << fileName << "': " << err << std::endl;
-        throw InvalidResourceException(msg.str().c_str());
+        return R(msg.str());
     }
 
     [[suppress(type.1)]]
@@ -257,31 +223,35 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
         auto err = GetError();
         std::stringstream msg;
         msg << "Error locking resource id=" << resId << " in file '" << fileName << "': " << err << std::endl;
-        throw InvalidResourceException(msg.str().c_str());
+        return R(msg.str());
     }
 
-    std::vector<char> data(pResData, pResData + resSize);
-    return data;
+    auto data = std::vector<char>(pResData, pResData + resSize);
+    return R(std::move(data));
 }
 
-void ResLib::Copy(const char* fromFile, const char* resType, int fromId, /*int fromLangId, */const char* toFile, int toId/*, int toLangId*/)
+Result<void> ResLib::Copy(const char* fromFile, const char* resType, int fromId, /*int fromLangId, */const char* toFile, int toId/*, int toLangId*/) noexcept
 {
-    auto const& data = Read(fromFile, resType, fromId);
-    Write(data, toFile, resType, toId);
+    auto const& result = Read(fromFile, resType, fromId);
+    if (result)
+    {
+        return Write(result.Get(), toFile, resType, toId);
+    }
+
+    return Result<void>(result.Message());
 }
 
-std::vector<int> ResLib::Enum(const char* fileName, const char* resType)
+Result<std::vector<int>> ResLib::Enum(const char* fileName, const char* resType) noexcept
 {
-    if (!fileName | !resType) throw ArgumentNullException();
+    using R = Result<std::vector<int>>;
+    if (!fileName | !resType) return R::ErrorArgumentNull();
     auto resTypePos = Types.find(resType);
-    if (resTypePos == Types.end()) throw InvalidTypeException(resType);
+    if (resTypePos == Types.end()) return R::ErrorInvalidType(resType);
 
     auto dll = DataLibHandle(fileName);
     if (!dll.IsValid())
     {
-        std::stringstream msg;
-        msg << "Unable to open file '" << fileName << "'" << std::endl;
-        throw InvalidFileException(msg.str().c_str());
+        return R::ErrorInvalidFile(fileName);
     }
 
     std::vector<int> data;
@@ -295,5 +265,5 @@ std::vector<int> ResLib::Enum(const char* fileName, const char* resType)
     }, 
         reinterpret_cast<LONG_PTR>(&data));
 
-    return data;
+    return R(std::move(data));
 }
