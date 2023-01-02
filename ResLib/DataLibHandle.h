@@ -8,13 +8,22 @@ struct DataLibHandle
         : handle{ 
             ::LoadLibraryExW(
                 Utf8::ToWide(fileName).c_str(), 
-                0, 
+                nullptr, 
                 LOAD_LIBRARY_AS_DATAFILE|LOAD_LIBRARY_AS_IMAGE_RESOURCE) } 
     {}
 
 	~DataLibHandle() { if (IsValid()) ::FreeLibrary(handle); }
-	
-    bool IsValid() const { return handle != 0; }
 
+	DataLibHandle() = delete;
+	DataLibHandle(DataLibHandle&) = delete;
+	DataLibHandle(const DataLibHandle&) = delete;
+	DataLibHandle(DataLibHandle&&) = delete;
+	DataLibHandle& operator=(const DataLibHandle&) = delete;
+	DataLibHandle& operator=(DataLibHandle&&) = delete;
+	
+	operator HMODULE() const noexcept { return handle; }
+    bool IsValid() const noexcept { return handle != nullptr; }
+
+private:
 	HMODULE handle;
 };

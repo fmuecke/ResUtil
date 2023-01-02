@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <system_error>
+#include <gsl/util>
 
 class ResUtil
 {
@@ -11,30 +12,29 @@ public:
 	struct IoException : public std::exception
 	{
 		explicit IoException(const char* msg) :_msg{ msg } {}
-		virtual const char* what() const override { return _msg.c_str(); }
+		const char* what() const noexcept override { return _msg.c_str(); }
 
 	private:
 		std::string _msg;
 	};
 
-	ResUtil();
-	~ResUtil();
+	ResUtil() noexcept;
 
 	static std::vector<char> ReadData(const char* fileName)
 	{
-		Handle file = { ::CreateFileW(Utf8::ToWide(fileName).c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL) };
+		Handle file = { ::CreateFileW(Utf8::ToWide(fileName).c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr) };
 		if (!file.IsValid())
 		{
-			auto msg = std::string("Unable to open target file: ") + GetError().message();
+			const auto msg = std::string("Unable to open target file: ") + GetError().message();
 			throw IoException(msg.c_str());
 		}
 
 		DWORD size = ::GetFileSize(file, nullptr);
 		auto data = std::vector<char>(size, 0x00);
-		if (0 == ::ReadFile(file, data.data(), static_cast<DWORD>(data.size()), &size, nullptr))
+		if (0 == ::ReadFile(file, data.data(), gsl::narrow_cast<DWORD>(data.size()), &size, nullptr))
 		{
-			auto err = GetError();
-			auto msg = std::string("Unable to read data: ") + err.message();
+			const auto err = GetError();
+			const auto msg = std::string("Unable to read data: ") + err.message();
 			throw IoException(msg.c_str());
 		}
 
@@ -43,18 +43,18 @@ public:
 
 	static void WriteData(std::vector<char> const& data, const char* fileName)
 	{
-		Handle file = { ::CreateFileW(Utf8::ToWide(fileName).c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL) };
+		Handle file = { ::CreateFileW(Utf8::ToWide(fileName).c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr) };
 		DWORD bytesWritten{ 0 };
-		if (!::WriteFile(file, data.data(), static_cast<DWORD>(data.size()), &bytesWritten, 0))
+		if (!::WriteFile(file, data.data(), gsl::narrow_cast<DWORD>(data.size()), &bytesWritten, nullptr))
 		{
-			auto err = GetError();
-			auto msg = std::string("Unable to write data: ") + err.message();
+			const auto err = GetError();
+			const auto msg = std::string("Unable to write data: ") + err.message();
 			throw IoException(msg.c_str());
 		}
 	}
 
 private:
-	static std::error_code GetError()
+	static std::error_code GetError() noexcept
 	{
 		return std::error_code(::GetLastError(), std::system_category());
 	}

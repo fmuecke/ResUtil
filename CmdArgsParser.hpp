@@ -17,8 +17,8 @@ public:
 	struct ParseException : public std::exception
 	{
 		//explicit ParseException(const char* msg) : _msg{ msg } {}
-		explicit ParseException(std::string&& msg) : _msg{ std::move(msg) } {}
-		virtual const char* what() const override { return _msg.c_str(); }
+		explicit ParseException(std::string&& msg) noexcept : _msg{ std::move(msg) } {}
+		const char* what() const noexcept override  { return _msg.c_str(); }
 
 	private:
 		std::string _msg;
@@ -26,11 +26,11 @@ public:
 
 	struct InvalidCommandArgsException : public ParseException
 	{
-		explicit InvalidCommandArgsException(std::string command, std::string&& msg)
+		explicit InvalidCommandArgsException(std::string command, std::string&& msg) noexcept
 			: ParseException(std::move(msg))
 			, _cmd{ std::move(command) }
 		{}
-		const char* Command() const { return _cmd.c_str(); }
+		const char* Command() const noexcept { return _cmd.c_str(); }
 
 	private:
 		std::string _cmd;
@@ -69,12 +69,12 @@ public:
 
 	explicit CmdArgsParser(const char* title) : _programTitle{ title } {}
 
-	void Add(CommandSet&& set) noexcept
+	void Add(CommandSet&& set)
 	{
 		_commands.emplace_back(std::move(set));
 	}
 
-	void AddAdditionalHelp(std::string&& s) noexcept
+	void AddAdditionalHelp(std::string&& s)
 	{
 		_additionalHelp.emplace_back(std::move(s));
 	}
@@ -112,12 +112,12 @@ public:
 		}
 	}
 
-	std::string HelpText() const noexcept
+	std::string HelpText() const
 	{
 		return HelpText(std::string());
 	}
 
-	std::string HelpText(std::string&& command) const noexcept
+	std::string HelpText(std::string&& command) const
 	{
 		std::string result = _programTitle + "\n\nUsage: command /param1:value ... /paramN:value\n\n";
 		size_t maxLen = 0;
@@ -152,19 +152,19 @@ public:
 		return result;
 	}
 
-	std::string GetCommand() const noexcept
+	std::string GetCommand() const
 	{
 		return _parsedArgs.command;
 	}
 
-	std::string GetValue(std::string const& s) const noexcept
+	std::string GetValue(std::string const& s) const
 	{ 
 		auto pos =_parsedArgs.args.find(s);
 		return pos != cend(_parsedArgs.args) ? pos->second : std::string();
 	}
 
 private:
-	static std::string TakeArg(std::vector<std::string>& args, std::string const& tag) noexcept
+	static std::string TakeArg(std::vector<std::string>& args, std::string const& tag)
 	{
 		auto fullTag = "/" + tag + ":";
 		auto pos = std::find_if(RANGE(args), [&](std::string const& arg)

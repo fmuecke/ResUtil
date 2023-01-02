@@ -2,11 +2,6 @@
 #include "ResUtil.h"
 
 
-ResUtil::ResUtil()
-{
-}
-
-
-ResUtil::~ResUtil()
+ResUtil::ResUtil() noexcept
 {
 }

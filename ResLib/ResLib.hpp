@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DataLibHandle.h"
+#include "..\Utf8.hpp"
 
 #include <Windows.h>
 #include <system_error>
@@ -12,15 +13,15 @@
 #include <map>
 #include <string>
 #include <exception>
-#include "..\Utf8.hpp"
+#include <gsl/util>
+
 
 class ResLib
 {
 public:
     using Byte = unsigned char;
     
-    ResLib();
-    ~ResLib();
+    ResLib() = default;
 
     struct TypeId
     {
@@ -54,7 +55,7 @@ public:
             , _msg {msg}
         {}
 
-        virtual const char* what() const override { return _msg.c_str(); }
+        const char* what() const noexcept override { return _msg.c_str(); }
 
     private:
         std::string _msg;
@@ -94,15 +95,15 @@ public:
 private:
     static std::string GetError()
     {
-        auto code = ::GetLastError();
-        auto err = std::error_code(code, std::system_category());
-        auto msg = err.message();
+        const auto code = ::GetLastError();
+        const auto err = std::error_code(code, std::system_category());
+        const auto msg = err.message();
         return msg.empty() ? "code = " + std::to_string(err.value()) + ")\n" : msg;
     }
 
     static constexpr inline WORD MakeLangId(int p, int s)
     {
-        return static_cast<WORD>(s) << 10 | static_cast<WORD>(p);
+        return gsl::narrow_cast<WORD>(s) << 10 | gsl::narrow_cast<WORD>(p);
     }
 };
 
@@ -128,8 +129,6 @@ const char * const ResLib::TypeId::String = "string"; // String - table entry.
 const char * const ResLib::TypeId::Version = "version"; // Version resource.
 const char * const ResLib::TypeId::Vxd = "vxd"; // VXD.
 
-//[[gsl::suppress]]
-//[[gsl::suppress(bounds)]]
 const std::map<const std::string, const wchar_t*> ResLib::Types =
 {
     { TypeId::Accelerator, MAKEINTRESOURCE(9) }, // Accelerator table.
@@ -155,12 +154,6 @@ const std::map<const std::string, const wchar_t*> ResLib::Types =
     { TypeId::Vxd, MAKEINTRESOURCE(20) } // VXD.
 };
 
-ResLib::ResLib()
-{}
-
-ResLib::~ResLib()
-{}
-
 void ResLib::Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/)
 {
     if (data.empty()) throw InvalidDataException();
@@ -170,7 +163,7 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
     if (resTypePos == Types.end()) throw InvalidTypeException(resType);
 
     auto targetFileHandle = ::BeginUpdateResourceA(fileName, FALSE);
-    if (targetFileHandle == NULL)
+    if (Handle::IsNull(targetFileHandle))
     {
         auto err = GetError();
         std::stringstream msg;
@@ -211,7 +204,7 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
     if (resTypePos == Types.end()) throw InvalidTypeException(resType);
     if (resId < 0 /*|| langId < 0*/) throw InvalidArgsException();
 
-    auto dll = DataLibHandle(fileName);
+    DataLibHandle dll(fileName);
     if (!dll.IsValid())
     {
         std::stringstream msg;
@@ -219,7 +212,7 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
         throw InvalidFileException(msg.str().c_str());
     }
 
-    auto resInfo = ::FindResourceW(dll.handle, MAKEINTRESOURCEW(resId), resTypePos->second);
+    auto resInfo = ::FindResourceW(dll, MAKEINTRESOURCEW(resId), resTypePos->second);
     if (!resInfo)
     {
         auto err = GetError();
@@ -228,7 +221,7 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
         throw InvalidResourceException(msg.str().c_str());
     }
 
-    auto resSize = ::SizeofResource(dll.handle, resInfo);
+    auto resSize = ::SizeofResource(dll, resInfo);
     if (resSize == 0)
     {
         auto err = GetError();
@@ -237,7 +230,7 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
         throw InvalidResourceException(msg.str().c_str());
     }
 
-    auto resHandle = ::LoadResource(dll.handle, resInfo);
+    auto resHandle = ::LoadResource(dll, resInfo);
     if (!resHandle)
     {
         auto err = GetError();
@@ -271,7 +264,7 @@ std::vector<int> ResLib::Enum(const char* fileName, const char* resType)
     auto resTypePos = Types.find(resType);
     if (resTypePos == Types.end()) throw InvalidTypeException(resType);
 
-    auto dll = DataLibHandle(fileName);
+    DataLibHandle dll(fileName);
     if (!dll.IsValid())
     {
         std::stringstream msg;
@@ -280,10 +273,12 @@ std::vector<int> ResLib::Enum(const char* fileName, const char* resType)
     }
 
     std::vector<int> data;
-
-    ::EnumResourceNamesW(dll.handle, resTypePos->second, 
+    
+    [[gsl::suppress(bounds.1)]]
+    ::EnumResourceNamesW(dll, resTypePos->second, 
         [](HMODULE /*hModule*/, LPCWSTR /*lpszType*/, LPWSTR lpszName, LONG_PTR lParam) -> BOOL
     {
+        [[gsl::suppress(type.1)]]
         auto data = reinterpret_cast<std::vector<int>*>(lParam);
         data->emplace_back(reinterpret_cast<int>(lpszName));
         return true;

@@ -6,6 +6,7 @@
 #include <Windows.h>
 #include <memory>
 #include <string>
+#include <gsl/util>
 
 namespace Utf8
 {
@@ -19,20 +20,20 @@ namespace Utf8
 
             if (!str) return std::wstring();
 
-            auto strLen = static_cast<int>(strlen(str)); // does not include null
-            auto requiredLen = ::MultiByteToWideChar(static_cast<int>(inputCp), 0, str, strLen, nullptr, 0);
+            const auto strLen = gsl::narrow_cast<int>(strlen(str)); // does not include null
+            const auto requiredLen = ::MultiByteToWideChar(gsl::narrow_cast<int>(inputCp), 0, str, strLen, nullptr, 0);
             if (requiredLen == 0)
             {
-                auto err = ::GetLastError();
+                const auto err = ::GetLastError();
                 throw std::error_code(err, std::system_category());
             }
             auto result = std::wstring();
             result.resize(requiredLen);
-            auto actualLen = ::MultiByteToWideChar(static_cast<int>(inputCp), 0, str, strLen, &result[0], requiredLen);
+            const auto actualLen = ::MultiByteToWideChar(gsl::narrow_cast<int>(inputCp), 0, str, strLen, &gsl::at(result, 0), requiredLen);
 
             if (actualLen == 0 || actualLen != requiredLen)
             {
-                auto err = ::GetLastError();
+                const auto err = ::GetLastError();
                 throw std::error_code(err, std::system_category());
             }
 
@@ -44,19 +45,19 @@ namespace Utf8
             static_assert(sizeof(wchar_t) == 2, "only UTF-16 wide strings supported!");
 
             if (!utf16Str) return std::string();
-            auto strLen = static_cast<int>(wcslen(utf16Str)); // does not include null
-            auto requiredLen = ::WideCharToMultiByte(static_cast<int>(outputCp), 0, utf16Str, strLen, nullptr, 0, nullptr, nullptr);
+            const auto strLen = gsl::narrow_cast<int>(wcslen(utf16Str)); // does not include null
+            const auto requiredLen = ::WideCharToMultiByte(gsl::narrow_cast<int>(outputCp), 0, utf16Str, strLen, nullptr, 0, nullptr, nullptr);
             if (requiredLen == 0)
             {
-                auto err = ::GetLastError();
+                const auto err = ::GetLastError();
                 throw std::error_code(err, std::system_category());
             }
             auto result = std::string();
             result.resize(requiredLen);
-            auto actualLen = ::WideCharToMultiByte(static_cast<int>(outputCp), 0, utf16Str, strLen, &result[0], requiredLen, nullptr, nullptr);
+            const auto actualLen = ::WideCharToMultiByte(gsl::narrow_cast<int>(outputCp), 0, utf16Str, strLen, &gsl::at(result,0), requiredLen, nullptr, nullptr);
             if (actualLen == 0)
             {
-                auto err = ::GetLastError();
+                const auto err = ::GetLastError();
                 throw std::error_code(err, std::system_category());
             }
 

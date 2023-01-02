@@ -18,42 +18,42 @@ using namespace std;
 
 int wmain(int argc, wchar_t** argv)
 {
-    CmdArgsParser argsParser{ "ResUtil v0.3 (c) 2015 Florian Muecke" };
+    CmdArgsParser argsParser{ "ResUtil v0.4 (c) 2015 Florian Muecke" };
 
     argsParser.Add({ "write", "write raw data into the specified file resource",
     {
-        {"in", "the file containing the raw data" },
-        {"out", "the target file" },
-        {"type", "the type of the resouce (see below)" },
-        {"id", "the resource id" },
-        //{"lang", "the language id", CmdArgsParser::RequiredArg::no }
+        {"in", "file containing the raw data" },
+        {"out", "target file" },
+        {"type", "type of the resouce (see below)" },
+        {"id", "resource id" },
+        //{"lang", "language id", CmdArgsParser::RequiredArg::no }
         } });
 
     argsParser.Add({ "read", "read the specified resource and dump it to disk",
     {
-        { "in", "the source file" },
-        { "out", "the target file" },
-        { "type", "the type of the resouce (see below)" },
-        { "id", "the resource id" },
+        { "in", "source file" },
+        { "out", "target file" },
+        { "type", "type of the resouce (see below)" },
+        { "id", "resource id" },
         //{ "lang", "the language id" }
     } });
 
     argsParser.Add({ "enum", "enumerate resources of a given type",
     {
-        { "in", "the source file" },
-        { "type", "the type of the resouces (see below)" },
-        //{ "lang", "the language id" }
+        { "in", "source file" },
+        { "type", "type of the resouces (see below)" },
+        //{ "lang", "language id" }
     } });
 
     argsParser.Add({ "copy", "copy a resource from one file to another",
     {
-        { "in", "the source file" },
-        { "out", "the target file" },
-        { "type", "the type of the resouce (see below)" },
-        { "idIn", "the resource id in the source file" },
-        { "idOut", "the resource id for the target file" },
-        //{ "langIn", "the language id of the resource in the source file" },
-        //{ "langOut", "the language id", CmdArgsParser::RequiredArg::no }
+        { "in", "source file" },
+        { "out", "target file" },
+        { "type", "type of the resouce (see below)" },
+        { "idIn", "resource id in the source file" },
+        { "idOut", "resource id for the target file" },
+        //{ "langIn", "language id of the resource in the source file" },
+        //{ "langOut", "language id", CmdArgsParser::RequiredArg::no }
     } });
 
     {
@@ -63,20 +63,20 @@ int wmain(int argc, wchar_t** argv)
         {
             resTypesHelp << x.first << ", ";
         }
-        auto str = resTypesHelp.str();
+        const auto str = resTypesHelp.str();
         argsParser.AddAdditionalHelp(str.substr(0, str.size() - 2));
     }
     try
     {
         argsParser.Parse(argc, argv);
     }
-    catch (CmdArgsParser::InvalidCommandArgsException& e)
+    catch (const CmdArgsParser::InvalidCommandArgsException& e)
     {
         cerr << argsParser.HelpText(e.Command());
         cerr << "\n" << e.what() << "\n";
         return ERROR_BAD_ARGUMENTS;
     }
-    catch (CmdArgsParser::ParseException& e)
+    catch (CmdArgsParser::ParseException const& e)
     {
         cerr << argsParser.HelpText();
         cerr << "\n" << e.what() << "\n";
@@ -129,7 +129,7 @@ int wmain(int argc, wchar_t** argv)
             return ERROR_BAD_ARGUMENTS;
         }
     }
-    catch (std::exception& e)
+    catch (const std::exception& e)
     {
         cerr << "\nerror: " << e.what();
         return 1;
