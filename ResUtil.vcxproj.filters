@@ -9,6 +9,7 @@
     <ClInclude Include="ResLib\DataLibHandle.h" />
     <ClInclude Include="ResLib\ResLib.hpp" />
     <ClInclude Include="Utf8.hpp" />
+    <ClInclude Include="ResTypes.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp" />

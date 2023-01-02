@@ -2,8 +2,10 @@
 
 #include "DataLibHandle.h"
 #include "..\Utf8.hpp"
+#include "..\ResTypes.h"
 
 #include <Windows.h>
+#include <WinUser.h>
 #include <system_error>
 #include <sstream>
 #include <memory>
@@ -22,31 +24,6 @@ public:
     using Byte = unsigned char;
     
     ResLib() = default;
-
-    struct TypeId
-    {
-        static const char * const Accelerator;// Accelerator table.
-        static const char * const Anicursor; // Animated cursor.
-        static const char * const Aniicon; // Animated icon.
-        static const char * const Bitmap; // Bitmap resource.
-        static const char * const Cursor; // Hardware - dependent cursor resource.
-        static const char * const Dialog; // Dialog box.
-        static const char * const Dlginclude; // Allows a resource editing tool to associate a string with an.rc file.Typically, the string is the name of the header file that provides symbolic names.The resource compiler parses the string but otherwise ignores the value.For example, 1 DLGINCLUDE "MyFile.h"
-        static const char * const Font; // Font resource.
-        static const char * const Fontdir; // Font directory resource.
-        static const char * const Groupcursor; // Hardware - independent cursor resource.
-        static const char * const Groupicon; // Hardware - independent icon resource.
-        static const char * const Html; // HTML resource.
-        static const char * const Icon; // Hardware - dependent icon resource.
-        static const char * const Manifest; // Side - by - Side Assembly Manifest.
-        static const char * const Menu; // Menu resource.
-        static const char * const Messagetable; // Message - table entry.
-        static const char * const Plugplay; // Plug and Play resource.
-        static const char * const Rcdata; // Application - defined resource(raw data).
-        static const char * const String; // String - table entry.
-        static const char * const Version; // Version resource.
-        static const char * const Vxd; // VXD.
-    };
 
     struct ResLibException : public std::exception
     {
@@ -88,9 +65,10 @@ public:
     static void Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/);
     static std::vector<char> Read(const char* fileName, const char* resType, int resId/*, int langId*/);
     static void Copy(const char* fromFile, const char* resType, int fromId/*, int fromLangId*/, const char* toFile, int toId/*, int toLangId*/);
-    static std::vector<int> Enum(const char* fileName, const char* resType);
+    static std::vector<std::string> Enum(const char* fileName, const char* resType);
+    static std::vector<std::string> EnumerateTypes(const char* fileName);
     static std::vector<int> EnumerateLanguages(const char* fileName, const char* resType);
-    static const std::map<const std::string, const wchar_t*> Types;
+    static bool IsValidResType(const std::string& type);
 
 private:
     static std::string GetError()
@@ -107,60 +85,18 @@ private:
     }
 };
 
-const char * const ResLib::TypeId::Accelerator = "accelerator"; // Accelerator table.
-const char * const ResLib::TypeId::Anicursor = "anicursor"; // Animated cursor.
-const char * const ResLib::TypeId::Aniicon = "aniicon"; // Animated icon.
-const char * const ResLib::TypeId::Bitmap = "bitmap"; // Bitmap resource.
-const char * const ResLib::TypeId::Cursor = "cursor"; // Hardware - dependent cursor resource.
-const char * const ResLib::TypeId::Dialog = "dialog"; // Dialog box.
-const char * const ResLib::TypeId::Dlginclude = "dlginclude"; // Allows a resource editing tool to associate a string with an.rc file.Typically, the string is the name of the header file that provides symbolic names.The resource compiler parses the string but otherwise ignores the value.For example, 1 DLGINCLUDE "MyFile.h"
-const char * const ResLib::TypeId::Font = "font"; // Font resource.
-const char * const ResLib::TypeId::Fontdir = "fontdir"; // Font directory resource.
-const char * const ResLib::TypeId::Groupcursor = "groupcursor"; // Hardware - independent cursor resource.
-const char * const ResLib::TypeId::Groupicon = "groupicon"; // Hardware - independent icon resource.
-const char * const ResLib::TypeId::Html = "html"; // HTML resource.
-const char * const ResLib::TypeId::Icon = "icon"; // Hardware - dependent icon resource.
-const char * const ResLib::TypeId::Manifest = "manifest"; // Side - by - Side Assembly Manifest.
-const char * const ResLib::TypeId::Menu = "menu"; // Menu resource.
-const char * const ResLib::TypeId::Messagetable = "messagetable"; // Message - table entry.
-const char * const ResLib::TypeId::Plugplay = "plugplay"; // Plug and Play resource.
-const char * const ResLib::TypeId::Rcdata = "rcdata"; // Application - defined resource(raw data).
-const char * const ResLib::TypeId::String = "string"; // String - table entry.
-const char * const ResLib::TypeId::Version = "version"; // Version resource.
-const char * const ResLib::TypeId::Vxd = "vxd"; // VXD.
-
-const std::map<const std::string, const wchar_t*> ResLib::Types =
+bool ResLib::IsValidResType(const std::string& type)
 {
-    { TypeId::Accelerator, MAKEINTRESOURCE(9) }, // Accelerator table.
-    { TypeId::Anicursor, MAKEINTRESOURCE(21) }, // Animated cursor.
-    { TypeId::Aniicon, MAKEINTRESOURCE(22) }, // Animated icon.
-    { TypeId::Bitmap, MAKEINTRESOURCE(2) }, // Bitmap resource.
-    { TypeId::Cursor, MAKEINTRESOURCE(1) }, // Hardware - dependent cursor resource.
-    { TypeId::Dialog, MAKEINTRESOURCE(5) }, // Dialog box.
-    { TypeId::Dlginclude, MAKEINTRESOURCE(17) }, // Allows a resource editing tool to associate a string with an.rc file.Typically, the string is the name of the header file that provides symbolic names.The resource compiler parses the string but otherwise ignores the value.For example, 1 DLGINCLUDE "MyFile.h"
-    { TypeId::Font, MAKEINTRESOURCE(8) }, // Font resource.
-    { TypeId::Fontdir, MAKEINTRESOURCE(7) }, // Font directory resource.
-    { TypeId::Groupcursor, MAKEINTRESOURCE(12) }, // Hardware - independent cursor resource.
-    { TypeId::Groupicon, MAKEINTRESOURCE(14) }, // Hardware - independent icon resource.
-    { TypeId::Html, MAKEINTRESOURCE(23) }, // HTML resource.
-    { TypeId::Icon, MAKEINTRESOURCE(3) }, // Hardware - dependent icon resource.
-    { TypeId::Manifest, MAKEINTRESOURCE(24) }, // Side - by - Side Assembly Manifest.
-    { TypeId::Menu, MAKEINTRESOURCE(4) }, // Menu resource.
-    { TypeId::Messagetable, MAKEINTRESOURCE(11) }, // Message - table entry.
-    { TypeId::Plugplay, MAKEINTRESOURCE(19) }, // Plug and Play resource.
-    { TypeId::Rcdata, MAKEINTRESOURCE(10) }, // Application - defined resource(raw data).
-    { TypeId::String, MAKEINTRESOURCE(6) }, // String - table entry.
-    { TypeId::Version, MAKEINTRESOURCE(16) }, // Version resource.
-    { TypeId::Vxd, MAKEINTRESOURCE(20) } // VXD.
-};
+    return ResTypes::GetId(type) != ResTypes::UNKNOWN;
+}
 
-void ResLib::Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/)
+void ResLib::Write(std::vector<char> const& data, const char* fileName, const char* resTypeName, int resId/*, int langId*/)
 {
     if (data.empty()) throw InvalidDataException();
-    if (!fileName || !resType) throw ArgumentNullException();
+    if (!fileName || !resTypeName) throw ArgumentNullException();
     if (resId < 0 /*|| langId < 0*/) throw InvalidArgsException();
-    auto resTypePos = Types.find(resType);
-    if (resTypePos == Types.end()) throw InvalidTypeException(resType);
+    auto resTypeId = ResTypes::GetId(resTypeName);
+    if (resTypeId == ResTypes::UNKNOWN) throw InvalidTypeException(resTypeName);
 
     auto targetFileHandle = ::BeginUpdateResourceA(fileName, FALSE);
     if (Handle::IsNull(targetFileHandle))
@@ -172,12 +108,11 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
     }
 
     auto _data = data;
-
     while (_data.size() % 8) _data.emplace_back(0x00);  // data must be aligned
 
     if (::UpdateResourceW(
         targetFileHandle,
-        resTypePos->second,
+        resTypeId,
         MAKEINTRESOURCE(resId),
         ResLib::MakeLangId(LANG_NEUTRAL, SUBLANG_NEUTRAL),
         _data.data(),
@@ -197,11 +132,11 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
     }
 }
 
-std::vector<char> ResLib::Read(const char* fileName, const char* resType, int resId/*, int langId*/)
+std::vector<char> ResLib::Read(const char* fileName, const char* resTypeName, int resId/*, int langId*/)
 {
-    if (!fileName || !resType) throw ArgumentNullException();
-    auto resTypePos = Types.find(resType);
-    if (resTypePos == Types.end()) throw InvalidTypeException(resType);
+    if (!fileName || !resTypeName) throw ArgumentNullException();
+    auto resTypeId = ResTypes::GetId(resTypeName);
+    if (resTypeId == ResTypes::UNKNOWN) throw InvalidTypeException(resTypeName);
     if (resId < 0 /*|| langId < 0*/) throw InvalidArgsException();
 
     DataLibHandle dll(fileName);
@@ -212,7 +147,7 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
         throw InvalidFileException(msg.str().c_str());
     }
 
-    auto resInfo = ::FindResourceW(dll, MAKEINTRESOURCEW(resId), resTypePos->second);
+    auto resInfo = ::FindResourceW(dll, MAKEINTRESOURCEW(resId), resTypeId);
     if (!resInfo)
     {
         auto err = GetError();
@@ -258,11 +193,11 @@ void ResLib::Copy(const char* fromFile, const char* resType, int fromId, /*int f
     Write(data, toFile, resType, toId);
 }
 
-std::vector<int> ResLib::Enum(const char* fileName, const char* resType)
+std::vector<std::string> ResLib::Enum(const char* fileName, const char* resTypeName)
 {
-    if (!fileName || !resType) throw ArgumentNullException();
-    auto resTypePos = Types.find(resType);
-    if (resTypePos == Types.end()) throw InvalidTypeException(resType);
+    if (!fileName || !resTypeName) throw ArgumentNullException();
+    auto resTypeId = ResTypes::GetId(resTypeName);
+    if (resTypeId == ResTypes::UNKNOWN) throw InvalidTypeException(resTypeName);
 
     DataLibHandle dll(fileName);
     if (!dll.IsValid())
@@ -272,18 +207,61 @@ std::vector<int> ResLib::Enum(const char* fileName, const char* resType)
         throw InvalidFileException(msg.str().c_str());
     }
 
-    std::vector<int> data;
+    std::vector<std::string> data;
     
     [[gsl::suppress(bounds.1)]]
-    ::EnumResourceNamesW(dll, resTypePos->second, 
-        [](HMODULE /*hModule*/, LPCWSTR /*lpszType*/, LPWSTR lpszName, LONG_PTR lParam) -> BOOL
+    ::EnumResourceNamesW(dll, resTypeId, 
+        [](HMODULE /*hModule*/, LPCWSTR lpszType, LPWSTR lpszName, LONG_PTR lParam) -> BOOL
     {
         [[gsl::suppress(type.1)]]
-        auto data = reinterpret_cast<std::vector<int>*>(lParam);
-        data->emplace_back(reinterpret_cast<int>(lpszName));
+        auto data = reinterpret_cast<std::vector<std::string>*>(lParam);
+        if (IS_INTRESOURCE(lpszName))
+        {
+            data->emplace_back(std::to_string(reinterpret_cast<int>(lpszName)));
+        }
+        else
+        {
+            data->emplace_back(Utf8::FromWide(lpszName));
+        }
         return true;
     }, 
         reinterpret_cast<LONG_PTR>(&data));
 
     return data;
+}
+
+std::vector<std::string> ResLib::EnumerateTypes(const char* fileName)
+{
+    if (!fileName) throw ArgumentNullException();
+
+    DataLibHandle dll(fileName);
+    if (!dll.IsValid())
+    {
+        std::stringstream msg;
+        msg << "Unable to open file '" << fileName << "'" << std::endl;
+        throw InvalidFileException(msg.str().c_str());
+    }
+
+    std::vector<std::string> types;
+
+    [[gsl::suppress(bounds.1)]]
+    ::EnumResourceTypesExW(dll, 
+        [](HMODULE /*hModule*/, LPWSTR lpszType, LONG_PTR lParam) -> BOOL
+        {
+            auto types = reinterpret_cast<std::vector<std::string>*>(lParam);
+            if (IS_INTRESOURCE(lpszType))
+            {
+                types->emplace_back(ResTypes::GetName(lpszType));
+            }
+            else
+            {
+                types->emplace_back('\"' + Utf8::FromWide(lpszType) + '\"');
+            }
+            return true;
+        },
+            reinterpret_cast<LONG_PTR>(&types),
+            RESOURCE_ENUM_LN,
+            0);
+
+    return types;
 }

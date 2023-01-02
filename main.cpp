@@ -45,6 +45,12 @@ int wmain(int argc, wchar_t** argv)
         //{ "lang", "language id" }
     } });
 
+    argsParser.Add({ "enumTypes", "enumerate resources types",
+    {
+        { "in", "source file" },
+        //{ "lang", "language id" }
+    } });
+
     argsParser.Add({ "copy", "copy a resource from one file to another",
     {
         { "in", "source file" },
@@ -59,7 +65,7 @@ int wmain(int argc, wchar_t** argv)
     {
         stringstream resTypesHelp;
         resTypesHelp << "Valid resource types are: ";
-        for (auto const& x : ResLib::Types)
+        for (auto const& x : ResTypes::ResNameToIdMap)
         {
             resTypesHelp << x.first << ", ";
         }
@@ -85,48 +91,59 @@ int wmain(int argc, wchar_t** argv)
 
     try
     {
-        if (ResLib::Types.find(argsParser.GetValue("type")) == cend(ResLib::Types))
+        if (argsParser.GetCommand() == "enumTypes")
         {
-            cerr << argsParser.HelpText();
-            cerr << "\nerror: invalid resource type: " << argsParser.GetValue("type") << ". Valid types are:\n";
-            for (auto const& r : ResLib::Types) cout << "\t" << r.first << "\n";
-            return ERROR_BAD_ARGUMENTS;
-        }
-
-        if (argsParser.GetCommand() == "write")
-        {
-            //auto lang = langId.empty() ? WORD(MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL)) : static_cast<WORD>(stoi(langId));
-            auto data = ResUtil::ReadData(argsParser.GetValue("in").c_str());
-            ResLib::Write(data, argsParser.GetValue("out").c_str(), argsParser.GetValue("type").c_str(), stoi(argsParser.GetValue("id")));
-        }
-        else if (argsParser.GetCommand() == "read")
-        {
-            auto data = ResLib::Read(
-                argsParser.GetValue("in").c_str(),
-                argsParser.GetValue("type").c_str(),
-                stoi(argsParser.GetValue("id")));
-
-            ResUtil::WriteData(data, argsParser.GetValue("out").c_str());
-        }
-        else if (argsParser.GetCommand() == "clone")
-        {
-            throw std::exception("NOT IMPLEMENTED");
-        }
-        else if (argsParser.GetCommand() == "enum")
-        {
-            auto data = ResLib::Enum(
-                argsParser.GetValue("in").c_str(),
-                argsParser.GetValue("type").c_str());
-            
-            for (auto i : data)
+            auto types = ResLib::EnumerateTypes(argsParser.GetValue("in").c_str());
+            for (auto i : types)
             {
                 cout << i << "\n";
             }
         }
         else
         {
-            cerr << argsParser.HelpText();
-            return ERROR_BAD_ARGUMENTS;
+            if (!ResLib::IsValidResType(argsParser.GetValue("type")))
+            {
+                cerr << argsParser.HelpText();
+                cerr << "\nerror: invalid resource type: " << argsParser.GetValue("type") << ". Valid types are:\n";
+                for (auto const& r : ResTypes::ResNameToIdMap) cout << "\t" << r.first << "\n";
+                return ERROR_BAD_ARGUMENTS;
+            }
+
+            if (argsParser.GetCommand() == "write")
+            {
+                //auto lang = langId.empty() ? WORD(MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL)) : static_cast<WORD>(stoi(langId));
+                auto data = ResUtil::ReadData(argsParser.GetValue("in").c_str());
+                ResLib::Write(data, argsParser.GetValue("out").c_str(), argsParser.GetValue("type").c_str(), stoi(argsParser.GetValue("id")));
+            }
+            else if (argsParser.GetCommand() == "read")
+            {
+                auto data = ResLib::Read(
+                    argsParser.GetValue("in").c_str(),
+                    argsParser.GetValue("type").c_str(),
+                    stoi(argsParser.GetValue("id")));
+
+                ResUtil::WriteData(data, argsParser.GetValue("out").c_str());
+            }
+            else if (argsParser.GetCommand() == "clone")
+            {
+                throw std::exception("NOT IMPLEMENTED");
+            }
+            else if (argsParser.GetCommand() == "enum")
+            {
+                auto data = ResLib::Enum(
+                    argsParser.GetValue("in").c_str(),
+                    argsParser.GetValue("type").c_str());
+
+                for (auto i : data)
+                {
+                    cout << i << "\n";
+                }
+            }
+            else
+            {
+                cerr << argsParser.HelpText();
+                return ERROR_BAD_ARGUMENTS;
+            }
         }
     }
     catch (const std::exception& e)
