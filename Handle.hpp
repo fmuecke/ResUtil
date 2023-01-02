@@ -3,7 +3,7 @@
 
 struct Handle
 {
-	Handle(HANDLE handle) : _handle{ handle } {}
+	Handle(HANDLE handle) noexcept: _handle{ handle } {}
 	~Handle()
 	{
 		if (IsValid()) ::CloseHandle(_handle);

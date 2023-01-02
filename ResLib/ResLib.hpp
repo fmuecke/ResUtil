@@ -100,11 +100,6 @@ private:
         return msg.empty() ? "code = " + std::to_string(err.value()) + ")\n" : msg;
     }
 
-    static constexpr inline const wchar_t* IntResW(int i)
-    {
-        [[suppress(type.1)]] return reinterpret_cast<const wchar_t*>(static_cast<INT_PTR>(i));
-    }
-
     static constexpr inline WORD MakeLangId(int p, int s)
     {
         return static_cast<WORD>(s) << 10 | static_cast<WORD>(p);
@@ -133,30 +128,31 @@ const char * const ResLib::TypeId::String = "string"; // String - table entry.
 const char * const ResLib::TypeId::Version = "version"; // Version resource.
 const char * const ResLib::TypeId::Vxd = "vxd"; // VXD.
 
-[[suppress(type.4), suppress(bounds.1)]]
+//[[gsl::suppress]]
+//[[gsl::suppress(bounds)]]
 const std::map<const std::string, const wchar_t*> ResLib::Types =
 {
-    { TypeId::Accelerator, IntResW(9) }, // Accelerator table.
-    { TypeId::Anicursor, IntResW(21) }, // Animated cursor.
-    { TypeId::Aniicon, IntResW(22) }, // Animated icon.
-    { TypeId::Bitmap, IntResW(2) }, // Bitmap resource.
-    { TypeId::Cursor, IntResW(1) }, // Hardware - dependent cursor resource.
-    { TypeId::Dialog, IntResW(5) }, // Dialog box.
-    { TypeId::Dlginclude, IntResW(17) }, // Allows a resource editing tool to associate a string with an.rc file.Typically, the string is the name of the header file that provides symbolic names.The resource compiler parses the string but otherwise ignores the value.For example, 1 DLGINCLUDE "MyFile.h"
-    { TypeId::Font, IntResW(8) }, // Font resource.
-    { TypeId::Fontdir, IntResW(7) }, // Font directory resource.
-    { TypeId::Groupcursor, IntResW(12) }, // Hardware - independent cursor resource.
-    { TypeId::Groupicon, IntResW(14) }, // Hardware - independent icon resource.
-    { TypeId::Html, IntResW(23) }, // HTML resource.
-    { TypeId::Icon, IntResW(3) }, // Hardware - dependent icon resource.
-    { TypeId::Manifest, IntResW(24) }, // Side - by - Side Assembly Manifest.
-    { TypeId::Menu, IntResW(4) }, // Menu resource.
-    { TypeId::Messagetable, IntResW(11) }, // Message - table entry.
-    { TypeId::Plugplay, IntResW(19) }, // Plug and Play resource.
-    { TypeId::Rcdata, IntResW(10) }, // Application - defined resource(raw data).
-    { TypeId::String, IntResW(6) }, // String - table entry.
-    { TypeId::Version, IntResW(16) }, // Version resource.
-    { TypeId::Vxd, IntResW(20) } // VXD.
+    { TypeId::Accelerator, MAKEINTRESOURCE(9) }, // Accelerator table.
+    { TypeId::Anicursor, MAKEINTRESOURCE(21) }, // Animated cursor.
+    { TypeId::Aniicon, MAKEINTRESOURCE(22) }, // Animated icon.
+    { TypeId::Bitmap, MAKEINTRESOURCE(2) }, // Bitmap resource.
+    { TypeId::Cursor, MAKEINTRESOURCE(1) }, // Hardware - dependent cursor resource.
+    { TypeId::Dialog, MAKEINTRESOURCE(5) }, // Dialog box.
+    { TypeId::Dlginclude, MAKEINTRESOURCE(17) }, // Allows a resource editing tool to associate a string with an.rc file.Typically, the string is the name of the header file that provides symbolic names.The resource compiler parses the string but otherwise ignores the value.For example, 1 DLGINCLUDE "MyFile.h"
+    { TypeId::Font, MAKEINTRESOURCE(8) }, // Font resource.
+    { TypeId::Fontdir, MAKEINTRESOURCE(7) }, // Font directory resource.
+    { TypeId::Groupcursor, MAKEINTRESOURCE(12) }, // Hardware - independent cursor resource.
+    { TypeId::Groupicon, MAKEINTRESOURCE(14) }, // Hardware - independent icon resource.
+    { TypeId::Html, MAKEINTRESOURCE(23) }, // HTML resource.
+    { TypeId::Icon, MAKEINTRESOURCE(3) }, // Hardware - dependent icon resource.
+    { TypeId::Manifest, MAKEINTRESOURCE(24) }, // Side - by - Side Assembly Manifest.
+    { TypeId::Menu, MAKEINTRESOURCE(4) }, // Menu resource.
+    { TypeId::Messagetable, MAKEINTRESOURCE(11) }, // Message - table entry.
+    { TypeId::Plugplay, MAKEINTRESOURCE(19) }, // Plug and Play resource.
+    { TypeId::Rcdata, MAKEINTRESOURCE(10) }, // Application - defined resource(raw data).
+    { TypeId::String, MAKEINTRESOURCE(6) }, // String - table entry.
+    { TypeId::Version, MAKEINTRESOURCE(16) }, // Version resource.
+    { TypeId::Vxd, MAKEINTRESOURCE(20) } // VXD.
 };
 
 ResLib::ResLib()
@@ -189,7 +185,7 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
     if (::UpdateResourceW(
         targetFileHandle,
         resTypePos->second,
-        IntResW(resId),
+        MAKEINTRESOURCE(resId),
         ResLib::MakeLangId(LANG_NEUTRAL, SUBLANG_NEUTRAL),
         _data.data(),
         static_cast<DWORD>(data.size())) == 0)
@@ -250,7 +246,6 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
         throw InvalidResourceException(msg.str().c_str());
     }
 
-    [[suppress(type.1)]]
     auto pResData = reinterpret_cast<char*>(::LockResource(resHandle));
     if (!pResData)
     {

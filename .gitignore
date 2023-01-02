@@ -218,3 +218,4 @@ ModelManifest.xml
 *.ipdb
 *.iobj
 ResUtil.VC.db
+*.bak
