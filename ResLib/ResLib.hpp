@@ -168,7 +168,7 @@ ResLib::~ResLib()
 void ResLib::Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/)
 {
     if (data.empty()) throw InvalidDataException();
-    if (!fileName | !resType) throw ArgumentNullException();
+    if (!fileName || !resType) throw ArgumentNullException();
     if (resId < 0 /*|| langId < 0*/) throw InvalidArgsException();
     auto resTypePos = Types.find(resType);
     if (resTypePos == Types.end()) throw InvalidTypeException(resType);
@@ -210,7 +210,7 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
 
 std::vector<char> ResLib::Read(const char* fileName, const char* resType, int resId/*, int langId*/)
 {
-    if (!fileName | !resType) throw ArgumentNullException();
+    if (!fileName || !resType) throw ArgumentNullException();
     auto resTypePos = Types.find(resType);
     if (resTypePos == Types.end()) throw InvalidTypeException(resType);
     if (resId < 0 /*|| langId < 0*/) throw InvalidArgsException();
@@ -272,7 +272,7 @@ void ResLib::Copy(const char* fromFile, const char* resType, int fromId, /*int f
 
 std::vector<int> ResLib::Enum(const char* fileName, const char* resType)
 {
-    if (!fileName | !resType) throw ArgumentNullException();
+    if (!fileName || !resType) throw ArgumentNullException();
     auto resTypePos = Types.find(resType);
     if (resTypePos == Types.end()) throw InvalidTypeException(resType);
 
