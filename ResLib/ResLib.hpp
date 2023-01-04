@@ -17,12 +17,9 @@
 #include <exception>
 #include <gsl/util>
 
-
 class ResLib
 {
 public:
-    using Byte = unsigned char;
-    
     ResLib() = default;
 
     struct ResLibException : public std::exception
@@ -57,8 +54,8 @@ public:
         InvalidResourceException(std::string const& msg) : ResLibException(msg) {}
     };
 
-    static void Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/);
-    static std::vector<char> Read(const char* fileName, const char* resType, int resId/*, int langId*/);
+    static void Write(std::vector<unsigned char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/);
+    static std::vector<unsigned char> Read(const char* fileName, const char* resType, int resId/*, int langId*/);
     static void Copy(const char* fromFile, const char* resType, int fromId/*, int fromLangId*/, const char* toFile, int toId/*, int toLangId*/);
     static std::vector<std::string> Enum(const char* fileName, const char* resType);
     static std::vector<std::string> EnumerateTypes(const char* fileName);
@@ -83,7 +80,7 @@ private:
 // function definitions
 // ------------------------------------------
 
-void ResLib::Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/)
+void ResLib::Write(std::vector<unsigned char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/)
 {
     if (data.empty()) throw InvalidDataException();
     if (!fileName || !resType) throw ArgumentNullException();
@@ -98,8 +95,12 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
         throw InvalidFileException(msg.str().c_str());
     }
 
-    auto _data = data;
-    while (_data.size() % 8) _data.emplace_back(0x00);  // data must be aligned
+    // align data to a multiple of 8
+    auto _data{ data };
+    while (_data.size() % 8)
+    {
+        _data.emplace_back(static_cast<unsigned char>(0x00));
+    }
 
     std::wstring customType;
     auto resTypeId = ResTypes::GetId(resType, customType);
@@ -130,7 +131,7 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
     }
 }
 
-std::vector<char> ResLib::Read(const char* fileName, const char* resType, int resId/*, int langId*/)
+std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resType, int resId/*, int langId*/)
 {
     if (!fileName || !resType) throw ArgumentNullException();
     if (resId < 0 /*|| langId < 0*/) throw InvalidArgsException();
@@ -186,7 +187,7 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resType, int re
         throw InvalidResourceException(msg.str().c_str());
     }
 
-    std::vector<char> data(pResData, pResData + resSize);
+    std::vector<unsigned char> data(pResData, pResData + resSize);
     return data;
 }
 
@@ -219,7 +220,7 @@ std::vector<std::string> ResLib::Enum(const char* fileName, const char* resType)
     
     [[gsl::suppress(bounds.1)]]
     ::EnumResourceNamesW(dll, resTypeId, 
-        [](HMODULE /*hModule*/, LPCWSTR lpszType, LPWSTR lpszName, LONG_PTR lParam) -> BOOL
+        [](HMODULE /*hModule*/, LPCWSTR /*lpszType*/, LPWSTR lpszName, LONG_PTR lParam) -> BOOL
     {
         [[gsl::suppress(type.1)]]
         auto data = reinterpret_cast<std::vector<std::string>*>(lParam);

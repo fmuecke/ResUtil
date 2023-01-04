@@ -13,7 +13,8 @@ namespace ResUtilTest
 		
 		TEST_METHOD(ResTypeName_MapsToValidIds)
 		{
-			Assert::IsTrue(ResTypes::GetId(ResTypes::Strings::Bitmap) == RT_BITMAP);
+			wstring w;
+			Assert::IsTrue(ResTypes::GetId(ResTypes::Strings::Bitmap, w) == RT_BITMAP);
 		}
 
 		TEST_METHOD(ResTypeName_Undefined_MapsToZero)

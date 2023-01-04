@@ -97,7 +97,7 @@ namespace ResTypes
 		return std::string{};
 	}
 
-	static LPCWSTR GetId(std::string name, std::wstring& customId = std::wstring{})
+	static LPCWSTR GetId(std::string name, std::wstring& customId)
 	{
 		auto const& id = ResNameToIdMap.find(name);
 		if (id != ResNameToIdMap.end())
