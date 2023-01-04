@@ -97,6 +97,7 @@
     <ClInclude Include="ResTypes.h" />
     <ClInclude Include="ResUtil.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="StringHelper.h" />
     <ClInclude Include="Utf8.hpp" />
   </ItemGroup>
   <ItemGroup>
