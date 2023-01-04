@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Utf8.hpp"
+
 #include <windows.h>
 #include <WinUser.h>
 #include <string>
@@ -7,11 +9,11 @@
 
 namespace ResTypes
 {
-	static constexpr LPWSTR UNKNOWN = MAKEINTRESOURCE(0);
+	static constexpr LPCWSTR UNDEFINED_TYPE = MAKEINTRESOURCE(0);
 
 	namespace Strings
 	{
-		static const char* const Accelerator = "accelerator"; // Accelerator table.
+		static const char* const Accelerator ="accelerator"; // Accelerator table.
 		static const char* const Anicursor = "anicursor"; // Animated cursor.
 		static const char* const Aniicon = "aniicon"; // Animated icon.
 		static const char* const Bitmap = "bitmap"; // Bitmap resource.
@@ -32,10 +34,9 @@ namespace ResTypes
 		static const char* const String = "string"; // String - table entry.
 		static const char* const Version = "version"; // Version resource.
 		static const char* const Vxd = "vxd"; // VXD.
-		static const char* const Unknown = "UNKNOWN";
 	}
 
-	static const std::map<std::string, LPWSTR> ResNameToIdMap = {
+	static const std::map<std::string, LPCWSTR> ResNameToIdMap = {
 		{ Strings::Accelerator, RT_ACCELERATOR }, // Accelerator table.
 		{ Strings::Anicursor, RT_ANICURSOR }, // Animated cursor.
 		{ Strings::Aniicon, RT_ANIICON }, // Animated icon.
@@ -59,7 +60,7 @@ namespace ResTypes
 		{ Strings::Vxd, RT_VXD } // VXD.
 	};
 
-	static const std::map<LPWSTR, std::string> ResIdToNameMap = {
+	static const std::map<LPCWSTR, std::string> ResIdToNameMap = {
 		{ RT_ACCELERATOR, Strings::Accelerator }, // Accelerator table.
 		{ RT_ANICURSOR, Strings::Anicursor }, // Animated cursor.
 		{ RT_ANIICON, Strings::Aniicon }, // Animated icon.
@@ -83,17 +84,36 @@ namespace ResTypes
 		{ RT_VXD, Strings::Vxd }, // VXD.
 	};
 
-	static std::string GetName(LPWSTR id)
+	static std::string GetName(LPCWSTR id)
 	{
-		auto const& name = ResIdToNameMap.find(id);
-		if (name == ResIdToNameMap.end()) return Strings::Unknown;
-		else return name->second;
+		auto const& iter = ResIdToNameMap.find(id);
+		if (iter != ResIdToNameMap.end()) return iter->second;
+		
+		if (!IS_INTRESOURCE(id))
+		{
+			return Utf8::FromWide(id);
+		}
+
+		return std::string{};
 	}
 
-	static LPWSTR GetId(std::string name)
+	static LPCWSTR GetId(std::string name, std::wstring& customId = std::wstring{})
 	{
 		auto const& id = ResNameToIdMap.find(name);
-		if (id == ResNameToIdMap.end()) return UNKNOWN;
-		else return id->second;
+		if (id != ResNameToIdMap.end())
+		{
+			return id->second;
+		}
+
+		if (name[0] == '\"' && name[name.size() - 1] == '\"')
+		{
+			customId = Utf8::ToWide(name.substr(1, name.size() - 2));
+		}
+		else
+		{
+			customId = Utf8::ToWide(name);
+		}
+
+		return UNDEFINED_TYPE;
 	}
 }

@@ -4,6 +4,8 @@
 #include "CmdArgsParser.hpp"
 #include "ResLib/ResLib.hpp"
 #include "ResUtil.h"
+#include "StringHelper.h"
+
 #include <iostream>
 #include <memory>
 #include <string>
@@ -16,61 +18,72 @@
 
 using namespace std;
 
+
+static const char* const strCommand_write = "write";
+static const char* const strCommand_read = "read";
+static const char* const strCommand_copy = "copy";
+static const char* const strCommand_enum = "enum";
+static const char* const strCommand_enumTypes = "enumTypes";
+
+static const char* const strParam_in = "in";
+static const char* const strParam_out = "out";
+static const char* const strParam_type = "type";
+static const char* const strParam_id = "id";
+static const char* const strParam_idIn = "idIn";
+static const char* const strParam_idOut = "idOut";
+
 int wmain(int argc, wchar_t** argv)
 {
     CmdArgsParser argsParser{ "ResUtil v0.4 (c) 2015 Florian Muecke" };
 
-    argsParser.Add({ "write", "write raw data into the specified file resource",
+    argsParser.Add({ strCommand_write, "write raw data into the specified file resource",
     {
-        {"in", "file containing the raw data" },
-        {"out", "target file" },
-        {"type", "type of the resouce (see below)" },
-        {"id", "resource id" },
+        { strParam_in, "file containing the raw data" },
+        { strParam_out, "target file" },
+        { strParam_type, "type of the resouce (see below)" },
+        { strParam_id, "resource id" },
         //{"lang", "language id", CmdArgsParser::RequiredArg::no }
         } });
 
-    argsParser.Add({ "read", "read the specified resource and dump it to disk",
+    argsParser.Add({ strCommand_read, "read the specified resource and dump it to disk",
     {
-        { "in", "source file" },
-        { "out", "target file" },
-        { "type", "type of the resouce (see below)" },
-        { "id", "resource id" },
+        { strParam_in, "source file" },
+        { strParam_out, "target file" },
+        { strParam_type, "type of the resouce (see below)" },
+        { strParam_id, "resource id" },
         //{ "lang", "the language id" }
     } });
 
-    argsParser.Add({ "enum", "enumerate resources of a given type",
+    argsParser.Add({ strCommand_enum, "enumerate resources of a given type",
     {
-        { "in", "source file" },
-        { "type", "type of the resouces (see below)" },
+        { strParam_in, "source file" },
+        { strParam_type, "type of the resouces (see below)" },
         //{ "lang", "language id" }
     } });
 
-    argsParser.Add({ "enumTypes", "enumerate resources types",
+    argsParser.Add({ strCommand_enumTypes, "enumerate resources types",
     {
-        { "in", "source file" },
+        { strParam_in, "source file" },
         //{ "lang", "language id" }
     } });
 
-    argsParser.Add({ "copy", "copy a resource from one file to another",
-    {
-        { "in", "source file" },
-        { "out", "target file" },
-        { "type", "type of the resouce (see below)" },
-        { "idIn", "resource id in the source file" },
-        { "idOut", "resource id for the target file" },
-        //{ "langIn", "language id of the resource in the source file" },
-        //{ "langOut", "language id", CmdArgsParser::RequiredArg::no }
-    } });
+    //argsParser.Add({ strCommand_copy, "copy a resource from one file to another",
+    //{
+    //    { strParam_in, "source file" },
+    //    { strParam_out, "target file" },
+    //    { strParam_type, "type of the resouce (see below)" },
+    //    { strParam_idIn, "resource id in the source file" },
+    //    { strParam_idOut, "resource id for the target file" },
+    //    //{ "langIn", "language id of the resource in the source file" },
+    //    //{ "langOut", "language id", CmdArgsParser::RequiredArg::no }
+    //} });
 
     {
-        stringstream resTypesHelp;
-        resTypesHelp << "Valid resource types are: ";
-        for (auto const& x : ResTypes::ResNameToIdMap)
-        {
-            resTypesHelp << x.first << ", ";
-        }
-        const auto str = resTypesHelp.str();
-        argsParser.AddAdditionalHelp(str.substr(0, str.size() - 2));
+        stringstream helpText;
+        helpText << "Predefined resource types are: ";
+        helpText << StringHelper::join(ResTypes::ResNameToIdMap) << endl;
+        helpText << "Specify custom types within quotation marks: e.g. \"CustomData\"";
+        argsParser.AddAdditionalHelp(helpText.str());
     }
     try
     {
@@ -91,54 +104,49 @@ int wmain(int argc, wchar_t** argv)
 
     try
     {
-        if (argsParser.GetCommand() == "enumTypes")
+        if (argsParser.GetCommand() == strCommand_enumTypes)
         {
-            auto types = ResLib::EnumerateTypes(argsParser.GetValue("in").c_str());
-            for (auto i : types)
-            {
-                cout << i << "\n";
-            }
+            auto types = ResLib::EnumerateTypes(argsParser.GetValue(strParam_in).c_str());
+            cout << StringHelper::join(types, "\n") << endl;
         }
         else
         {
-            if (!ResLib::IsValidResType(argsParser.GetValue("type")))
+            wstring customType;
+            auto resTypeId = ResTypes::GetId(argsParser.GetValue(strParam_type), customType);
+            if (resTypeId == ResTypes::UNDEFINED_TYPE && customType.empty())
             {
-                cerr << argsParser.HelpText();
-                cerr << "\nerror: invalid resource type: " << argsParser.GetValue("type") << ". Valid types are:\n";
-                for (auto const& r : ResTypes::ResNameToIdMap) cout << "\t" << r.first << "\n";
+                cout << argsParser.HelpText();
+                cerr << "\nerror: invalid resource type: " << argsParser.GetValue(strParam_type) << endl;
                 return ERROR_BAD_ARGUMENTS;
             }
 
-            if (argsParser.GetCommand() == "write")
+            if (argsParser.GetCommand() == strCommand_write)
             {
                 //auto lang = langId.empty() ? WORD(MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL)) : static_cast<WORD>(stoi(langId));
-                auto data = ResUtil::ReadData(argsParser.GetValue("in").c_str());
-                ResLib::Write(data, argsParser.GetValue("out").c_str(), argsParser.GetValue("type").c_str(), stoi(argsParser.GetValue("id")));
+                auto data = ResUtil::ReadData(argsParser.GetValue(strParam_in).c_str());
+                ResLib::Write(data, argsParser.GetValue(strParam_out).c_str(), argsParser.GetValue(strParam_type).c_str(), stoi(argsParser.GetValue(strParam_id)));
             }
-            else if (argsParser.GetCommand() == "read")
+            else if (argsParser.GetCommand() == strCommand_read)
             {
                 auto data = ResLib::Read(
-                    argsParser.GetValue("in").c_str(),
-                    argsParser.GetValue("type").c_str(),
-                    stoi(argsParser.GetValue("id")));
+                    argsParser.GetValue(strParam_in).c_str(),
+                    argsParser.GetValue(strParam_type).c_str(),
+                    stoi(argsParser.GetValue(strParam_id)));
 
-                ResUtil::WriteData(data, argsParser.GetValue("out").c_str());
+                ResUtil::WriteData(data, argsParser.GetValue(strParam_out).c_str());
             }
-            else if (argsParser.GetCommand() == "clone")
-            {
-                throw std::exception("NOT IMPLEMENTED");
-            }
-            else if (argsParser.GetCommand() == "enum")
+            else if (argsParser.GetCommand() == strCommand_enum)
             {
                 auto data = ResLib::Enum(
-                    argsParser.GetValue("in").c_str(),
-                    argsParser.GetValue("type").c_str());
+                    argsParser.GetValue(strParam_in).c_str(),
+                    argsParser.GetValue(strParam_type).c_str());
 
-                for (auto i : data)
-                {
-                    cout << i << "\n";
-                }
+                cout << StringHelper::join(data, "\n") << endl;
             }
+            //else if (argsParser.GetCommand() == strCommand_copy)
+            //{
+            //    throw std::exception("NOT IMPLEMENTED");
+            //}
             else
             {
                 cerr << argsParser.HelpText();

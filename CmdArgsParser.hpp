@@ -1,5 +1,7 @@
 #pragma once
+
 #include "Utf8.hpp"
+
 #include <string>
 #include <vector>
 #include <map>
@@ -13,7 +15,7 @@
 class CmdArgsParser
 {
 public:
-	
+
 	struct ParseException : public std::exception
 	{
 		//explicit ParseException(const char* msg) : _msg{ msg } {}
@@ -117,7 +119,7 @@ public:
 		return HelpText(std::string());
 	}
 
-	std::string HelpText(std::string&& command) const
+	std::string HelpText(const std::string& command) const
 	{
 		std::string result = _programTitle + "\n\nUsage: command /param1:value ... /paramN:value\n\n";
 		size_t maxLen = 0;

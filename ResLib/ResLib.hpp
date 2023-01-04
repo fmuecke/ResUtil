@@ -47,11 +47,6 @@ public:
         InvalidFileException(std::string const& msg) : ResLibException(msg) {}
     };
 
-    struct InvalidTypeException : public ResLibException
-    {
-        InvalidTypeException(const char* type) : ResLibException(std::string("The type is not valid: ").append(type)) {}
-    };
-
     struct UpdateResourceException : public ResLibException
     {
         UpdateResourceException(std::string const& msg) : ResLibException(msg) {}
@@ -68,7 +63,6 @@ public:
     static std::vector<std::string> Enum(const char* fileName, const char* resType);
     static std::vector<std::string> EnumerateTypes(const char* fileName);
     static std::vector<int> EnumerateLanguages(const char* fileName, const char* resType);
-    static bool IsValidResType(const std::string& type);
 
 private:
     static std::string GetError()
@@ -85,18 +79,15 @@ private:
     }
 };
 
-bool ResLib::IsValidResType(const std::string& type)
-{
-    return ResTypes::GetId(type) != ResTypes::UNKNOWN;
-}
+// ------------------------------------------
+// function definitions
+// ------------------------------------------
 
-void ResLib::Write(std::vector<char> const& data, const char* fileName, const char* resTypeName, int resId/*, int langId*/)
+void ResLib::Write(std::vector<char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/)
 {
     if (data.empty()) throw InvalidDataException();
-    if (!fileName || !resTypeName) throw ArgumentNullException();
+    if (!fileName || !resType) throw ArgumentNullException();
     if (resId < 0 /*|| langId < 0*/) throw InvalidArgsException();
-    auto resTypeId = ResTypes::GetId(resTypeName);
-    if (resTypeId == ResTypes::UNKNOWN) throw InvalidTypeException(resTypeName);
 
     auto targetFileHandle = ::BeginUpdateResourceA(fileName, FALSE);
     if (Handle::IsNull(targetFileHandle))
@@ -110,10 +101,17 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
     auto _data = data;
     while (_data.size() % 8) _data.emplace_back(0x00);  // data must be aligned
 
+    std::wstring customType;
+    auto resTypeId = ResTypes::GetId(resType, customType);
+    if (resTypeId == ResTypes::UNDEFINED_TYPE)
+    {
+        resTypeId = customType.c_str();
+    }
+
     if (::UpdateResourceW(
         targetFileHandle,
         resTypeId,
-        MAKEINTRESOURCE(resId),
+        MAKEINTRESOURCEW(resId),
         ResLib::MakeLangId(LANG_NEUTRAL, SUBLANG_NEUTRAL),
         _data.data(),
         static_cast<DWORD>(data.size())) == 0)
@@ -132,11 +130,9 @@ void ResLib::Write(std::vector<char> const& data, const char* fileName, const ch
     }
 }
 
-std::vector<char> ResLib::Read(const char* fileName, const char* resTypeName, int resId/*, int langId*/)
+std::vector<char> ResLib::Read(const char* fileName, const char* resType, int resId/*, int langId*/)
 {
-    if (!fileName || !resTypeName) throw ArgumentNullException();
-    auto resTypeId = ResTypes::GetId(resTypeName);
-    if (resTypeId == ResTypes::UNKNOWN) throw InvalidTypeException(resTypeName);
+    if (!fileName || !resType) throw ArgumentNullException();
     if (resId < 0 /*|| langId < 0*/) throw InvalidArgsException();
 
     DataLibHandle dll(fileName);
@@ -145,6 +141,13 @@ std::vector<char> ResLib::Read(const char* fileName, const char* resTypeName, in
         std::stringstream msg;
         msg << "Unable to open file '" << fileName << "'" << std::endl;
         throw InvalidFileException(msg.str().c_str());
+    }
+
+    std::wstring customType;
+    auto resTypeId = ResTypes::GetId(resType, customType);
+    if (resTypeId == ResTypes::UNDEFINED_TYPE)
+    {
+        resTypeId = customType.c_str();
     }
 
     auto resInfo = ::FindResourceW(dll, MAKEINTRESOURCEW(resId), resTypeId);
@@ -193,11 +196,9 @@ void ResLib::Copy(const char* fromFile, const char* resType, int fromId, /*int f
     Write(data, toFile, resType, toId);
 }
 
-std::vector<std::string> ResLib::Enum(const char* fileName, const char* resTypeName)
+std::vector<std::string> ResLib::Enum(const char* fileName, const char* resType)
 {
-    if (!fileName || !resTypeName) throw ArgumentNullException();
-    auto resTypeId = ResTypes::GetId(resTypeName);
-    if (resTypeId == ResTypes::UNKNOWN) throw InvalidTypeException(resTypeName);
+    if (!fileName || !resType) throw ArgumentNullException();
 
     DataLibHandle dll(fileName);
     if (!dll.IsValid())
@@ -205,6 +206,13 @@ std::vector<std::string> ResLib::Enum(const char* fileName, const char* resTypeN
         std::stringstream msg;
         msg << "Unable to open file '" << fileName << "'" << std::endl;
         throw InvalidFileException(msg.str().c_str());
+    }
+
+    std::wstring customType;
+    auto resTypeId = ResTypes::GetId(resType, customType);
+    if (resTypeId == ResTypes::UNDEFINED_TYPE)
+    {
+        resTypeId = customType.c_str();
     }
 
     std::vector<std::string> data;
