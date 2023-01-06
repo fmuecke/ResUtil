@@ -36,7 +36,7 @@ namespace ResTypes
 		static const char* const Vxd = "vxd"; // VXD.
 	}
 
-	static const std::map<std::string, LPCWSTR> ResNameToIdMap = {
+	static const std::map<std::string, LPCWSTR> ResNameToValueMap = {
 		{ Strings::Accelerator, RT_ACCELERATOR }, // Accelerator table.
 		{ Strings::Anicursor, RT_ANICURSOR }, // Animated cursor.
 		{ Strings::Aniicon, RT_ANIICON }, // Animated icon.
@@ -60,7 +60,7 @@ namespace ResTypes
 		{ Strings::Vxd, RT_VXD } // VXD.
 	};
 
-	static const std::map<LPCWSTR, std::string> ResIdToNameMap = {
+	static const std::map<LPCWSTR, std::string> ResValueToNameMap = {
 		{ RT_ACCELERATOR, Strings::Accelerator }, // Accelerator table.
 		{ RT_ANICURSOR, Strings::Anicursor }, // Animated cursor.
 		{ RT_ANIICON, Strings::Aniicon }, // Animated icon.
@@ -84,10 +84,24 @@ namespace ResTypes
 		{ RT_VXD, Strings::Vxd }, // VXD.
 	};
 
+	LPCWSTR ParseResIdString(const char* resIdStr, std::wstring& out)
+	{
+		try
+		{
+			auto const resIdNumber = std::stoi(resIdStr);
+			return MAKEINTRESOURCEW(resIdNumber);
+		}
+		catch (std::invalid_argument const&)
+		{
+			out = Utf8::ToWide(resIdStr);
+			return out.c_str();
+		}
+	}
+
 	static std::string GetName(LPCWSTR id)
 	{
-		auto const& iter = ResIdToNameMap.find(id);
-		if (iter != ResIdToNameMap.end()) return iter->second;
+		auto const& iter = ResValueToNameMap.find(id);
+		if (iter != ResValueToNameMap.end()) return iter->second;
 		
 		if (!IS_INTRESOURCE(id))
 		{
@@ -97,23 +111,15 @@ namespace ResTypes
 		return std::string{};
 	}
 
-	static LPCWSTR GetId(std::string name, std::wstring& customId)
+	static LPCWSTR GetValue(std::string const& name, std::wstring& customId)
 	{
-		auto const& id = ResNameToIdMap.find(name);
-		if (id != ResNameToIdMap.end())
+		auto const& id = ResNameToValueMap.find(name);
+		if (id != ResNameToValueMap.end())
 		{
 			return id->second;
 		}
 
-		if (name[0] == '\"' && name[name.size() - 1] == '\"')
-		{
-			customId = Utf8::ToWide(name.substr(1, name.size() - 2));
-		}
-		else
-		{
-			customId = Utf8::ToWide(name);
-		}
-
+		customId = Utf8::ToWide(name);
 		return UNDEFINED_TYPE;
 	}
 }

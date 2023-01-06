@@ -81,8 +81,8 @@ int wmain(int argc, wchar_t** argv)
     {
         stringstream helpText;
         helpText << "Predefined resource types are: ";
-        helpText << StringHelper::join(ResTypes::ResNameToIdMap) << endl;
-        helpText << "Specify custom types within quotation marks: e.g. \"CustomData\"";
+        helpText << StringHelper::join(ResTypes::ResNameToValueMap) << endl;
+        helpText << "Custom types can be specified as strings";
         argsParser.AddAdditionalHelp(helpText.str());
     }
     try
@@ -111,27 +111,18 @@ int wmain(int argc, wchar_t** argv)
         }
         else
         {
-            wstring customType;
-            auto resTypeId = ResTypes::GetId(argsParser.GetValue(strParam_type), customType);
-            if (resTypeId == ResTypes::UNDEFINED_TYPE && customType.empty())
-            {
-                cout << argsParser.HelpText();
-                cerr << "\nerror: invalid resource type: " << argsParser.GetValue(strParam_type) << endl;
-                return ERROR_BAD_ARGUMENTS;
-            }
-
             if (argsParser.GetCommand() == strCommand_write)
             {
                 //auto lang = langId.empty() ? WORD(MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL)) : static_cast<WORD>(stoi(langId));
                 auto data = ResUtil::ReadData(argsParser.GetValue(strParam_in).c_str());
-                ResLib::Write(data, argsParser.GetValue(strParam_out).c_str(), argsParser.GetValue(strParam_type).c_str(), stoi(argsParser.GetValue(strParam_id)));
+                ResLib::Write(data, argsParser.GetValue(strParam_out).c_str(), argsParser.GetValue(strParam_type).c_str(), argsParser.GetValue(strParam_id).c_str());
             }
             else if (argsParser.GetCommand() == strCommand_read)
             {
                 auto data = ResLib::Read(
                     argsParser.GetValue(strParam_in).c_str(),
                     argsParser.GetValue(strParam_type).c_str(),
-                    stoi(argsParser.GetValue(strParam_id)));
+                    argsParser.GetValue(strParam_id).c_str());
 
                 ResUtil::WriteData(data, argsParser.GetValue(strParam_out).c_str());
             }

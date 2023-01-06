@@ -54,9 +54,9 @@ public:
         InvalidResourceException(std::string const& msg) : ResLibException(msg) {}
     };
 
-    static void Write(std::vector<unsigned char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/);
-    static std::vector<unsigned char> Read(const char* fileName, const char* resType, int resId/*, int langId*/);
-    static void Copy(const char* fromFile, const char* resType, int fromId/*, int fromLangId*/, const char* toFile, int toId/*, int toLangId*/);
+    static void Write(std::vector<unsigned char> const& data, const char* fileName, const char* resType, const char* resId/*, int langId*/);
+    static std::vector<unsigned char> Read(const char* fileName, const char* resType, const char* resId/*, int langId*/);
+    static void Copy(const char* fromFile, const char* resType, const char* fromIdStr/*, int fromLangId*/, const char* toFile, const char* toIdStr/*, int toLangId*/);
     static std::vector<std::string> Enum(const char* fileName, const char* resType);
     static std::vector<std::string> EnumerateTypes(const char* fileName);
     static std::vector<int> EnumerateLanguages(const char* fileName, const char* resType);
@@ -80,11 +80,10 @@ private:
 // function definitions
 // ------------------------------------------
 
-void ResLib::Write(std::vector<unsigned char> const& data, const char* fileName, const char* resType, int resId/*, int langId*/)
+void ResLib::Write(std::vector<unsigned char> const& data, const char* fileName, const char* resTypeStr, const char* resIdStr/*, int langId*/)
 {
     if (data.empty()) throw InvalidDataException();
-    if (!fileName || !resType) throw ArgumentNullException();
-    if (resId < 0 /*|| langId < 0*/) throw InvalidArgsException();
+    if (!fileName || !resTypeStr || !resIdStr) throw ArgumentNullException();
 
     auto targetFileHandle = ::BeginUpdateResourceA(fileName, FALSE);
     if (Handle::IsNull(targetFileHandle))
@@ -103,16 +102,19 @@ void ResLib::Write(std::vector<unsigned char> const& data, const char* fileName,
     }
 
     std::wstring customType;
-    auto resTypeId = ResTypes::GetId(resType, customType);
-    if (resTypeId == ResTypes::UNDEFINED_TYPE)
+    auto resType = ResTypes::GetValue(resTypeStr, customType);
+    if (resType == ResTypes::UNDEFINED_TYPE)
     {
-        resTypeId = customType.c_str();
+        resType = customType.c_str();
     }
+
+    std::wstring customId;
+    LPCWSTR resId = ResTypes::ParseResIdString(resIdStr, customId);
 
     if (::UpdateResourceW(
         targetFileHandle,
-        resTypeId,
-        MAKEINTRESOURCEW(resId),
+        resType,
+        resId,
         ResLib::MakeLangId(LANG_NEUTRAL, SUBLANG_NEUTRAL),
         _data.data(),
         static_cast<DWORD>(data.size())) == 0)
@@ -131,10 +133,9 @@ void ResLib::Write(std::vector<unsigned char> const& data, const char* fileName,
     }
 }
 
-std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resType, int resId/*, int langId*/)
+std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resTypeStr, const char* resIdStr/*, int langId*/)
 {
-    if (!fileName || !resType) throw ArgumentNullException();
-    if (resId < 0 /*|| langId < 0*/) throw InvalidArgsException();
+    if (!fileName || !resTypeStr || !resIdStr) throw ArgumentNullException();
 
     DataLibHandle dll(fileName);
     if (!dll.IsValid())
@@ -144,19 +145,22 @@ std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resTyp
         throw InvalidFileException(msg.str().c_str());
     }
 
+    std::wstring customId;
+    LPCWSTR resId = ResTypes::ParseResIdString(resIdStr, customId);
+
     std::wstring customType;
-    auto resTypeId = ResTypes::GetId(resType, customType);
-    if (resTypeId == ResTypes::UNDEFINED_TYPE)
+    auto resType = ResTypes::GetValue(resTypeStr, customType);
+    if (resType == ResTypes::UNDEFINED_TYPE)
     {
-        resTypeId = customType.c_str();
+        resType = customType.c_str();
     }
 
-    auto resInfo = ::FindResourceW(dll, MAKEINTRESOURCEW(resId), resTypeId);
+    auto resInfo = ::FindResourceW(dll, resId, resType);
     if (!resInfo)
     {
         auto err = GetError();
         std::stringstream msg;
-        msg << "Finding resouce with id=" << resId << " in file '" << fileName << "' failed: " << err << std::endl;
+        msg << "Finding resouce with id=" << resIdStr << " in file '" << fileName << "' failed: " << err << std::endl;
         throw InvalidResourceException(msg.str().c_str());
     }
 
@@ -165,7 +169,7 @@ std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resTyp
     {
         auto err = GetError();
         std::stringstream msg;
-        msg << "Error getting size of resource with id=" << resId << " in file '" << fileName << "': " << err << std::endl;
+        msg << "Error getting size of resource with id=" << resIdStr << " in file '" << fileName << "': " << err << std::endl;
         throw InvalidResourceException(msg.str().c_str());
     }
 
@@ -174,7 +178,7 @@ std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resTyp
     {
         auto err = GetError();
         std::stringstream msg;
-        msg << "Error loading resource id=" << resId << " in file '" << fileName << "': " << err << std::endl;
+        msg << "Error loading resource id=" << resIdStr << " in file '" << fileName << "': " << err << std::endl;
         throw InvalidResourceException(msg.str().c_str());
     }
 
@@ -183,7 +187,7 @@ std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resTyp
     {
         auto err = GetError();
         std::stringstream msg;
-        msg << "Error locking resource id=" << resId << " in file '" << fileName << "': " << err << std::endl;
+        msg << "Error locking resource id=" << resIdStr << " in file '" << fileName << "': " << err << std::endl;
         throw InvalidResourceException(msg.str().c_str());
     }
 
@@ -191,10 +195,10 @@ std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resTyp
     return data;
 }
 
-void ResLib::Copy(const char* fromFile, const char* resType, int fromId, /*int fromLangId, */const char* toFile, int toId/*, int toLangId*/)
+void ResLib::Copy(const char* fromFile, const char* resType, const char* fromIdStr, /*int fromLangId, */const char* toFile, const char* toIdStr/*, int toLangId*/)
 {
-    auto const& data = Read(fromFile, resType, fromId);
-    Write(data, toFile, resType, toId);
+    auto const& data = Read(fromFile, resType, fromIdStr);
+    Write(data, toFile, resType, toIdStr);
 }
 
 std::vector<std::string> ResLib::Enum(const char* fileName, const char* resType)
@@ -210,7 +214,7 @@ std::vector<std::string> ResLib::Enum(const char* fileName, const char* resType)
     }
 
     std::wstring customType;
-    auto resTypeId = ResTypes::GetId(resType, customType);
+    auto resTypeId = ResTypes::GetValue(resType, customType);
     if (resTypeId == ResTypes::UNDEFINED_TYPE)
     {
         resTypeId = customType.c_str();
@@ -258,14 +262,7 @@ std::vector<std::string> ResLib::EnumerateTypes(const char* fileName)
         [](HMODULE /*hModule*/, LPWSTR lpszType, LONG_PTR lParam) -> BOOL
         {
             auto types = reinterpret_cast<std::vector<std::string>*>(lParam);
-            if (IS_INTRESOURCE(lpszType))
-            {
-                types->emplace_back(ResTypes::GetName(lpszType));
-            }
-            else
-            {
-                types->emplace_back('\"' + Utf8::FromWide(lpszType) + '\"');
-            }
+            types->emplace_back(ResTypes::GetName(lpszType));
             return true;
         },
             reinterpret_cast<LONG_PTR>(&types),
