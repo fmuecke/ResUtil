@@ -93,10 +93,10 @@
   <ItemGroup>
     <ClInclude Include="CmdArgs.hpp" />
     <ClInclude Include="CmdArgsParser.hpp" />
-    <ClInclude Include="Handle.hpp" />
     <ClInclude Include="ResLib\DataLibHandle.h" />
+    <ClInclude Include="ResLib\Handle.hpp" />
     <ClInclude Include="ResLib\ResLib.hpp" />
-    <ClInclude Include="ResTypes.h" />
+    <ClInclude Include="ResLib\ResTypes.h" />
     <ClInclude Include="ResUtil.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StringHelper.h" />

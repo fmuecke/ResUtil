@@ -2,19 +2,32 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="Handle.hpp" />
     <ClInclude Include="CmdArgs.hpp" />
     <ClInclude Include="CmdArgsParser.hpp" />
     <ClInclude Include="ResUtil.h" />
-    <ClInclude Include="ResLib\DataLibHandle.h" />
-    <ClInclude Include="ResLib\ResLib.hpp" />
     <ClInclude Include="Utf8.hpp" />
-    <ClInclude Include="ResTypes.h" />
     <ClInclude Include="StringHelper.h" />
+    <ClInclude Include="ResLib\DataLibHandle.h">
+      <Filter>ResLib</Filter>
+    </ClInclude>
+    <ClInclude Include="ResLib\ResLib.hpp">
+      <Filter>ResLib</Filter>
+    </ClInclude>
+    <ClInclude Include="ResLib\Handle.hpp">
+      <Filter>ResLib</Filter>
+    </ClInclude>
+    <ClInclude Include="ResLib\ResTypes.h">
+      <Filter>ResLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ResUtil.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="ResLib">
+      <UniqueIdentifier>{8a7350ea-3fb9-4cd7-a77c-420791a982cd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

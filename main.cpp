@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "Handle.hpp"
 #include "CmdArgs.hpp"
 #include "CmdArgsParser.hpp"
 #include "ResLib/ResLib.hpp"
@@ -81,7 +80,7 @@ int wmain(int argc, wchar_t** argv)
     {
         stringstream helpText;
         helpText << "Predefined resource types are: ";
-        helpText << StringHelper::join(ResTypes::ResNameToValueMap) << endl;
+        helpText << StringHelper::join(ResLib::Types::ResNameToValueMap) << endl;
         helpText << "Custom types can be specified as strings";
         argsParser.AddAdditionalHelp(helpText.str());
     }

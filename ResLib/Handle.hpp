@@ -1,4 +1,6 @@
 #pragma once
+
+#define VC_EXTRALEAN  // Exclude rarely-used stuff from Windows headers
 #include <Windows.h>
 
 struct Handle
@@ -8,7 +10,7 @@ struct Handle
 	{
 		if (IsValid()) ::CloseHandle(_handle);
 	}
-	
+
 	Handle() = delete;
 	Handle(const Handle&) = delete;
 	Handle(Handle&&) = delete;
@@ -22,4 +24,3 @@ struct Handle
 private:
 	HANDLE _handle;
 };
-

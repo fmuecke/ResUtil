@@ -1,8 +1,9 @@
 #pragma once
 
+#include "Handle.hpp"
 #include "DataLibHandle.h"
+#include "ResTypes.h"
 #include "..\Utf8.hpp"
-#include "..\ResTypes.h"
 
 #include <Windows.h>
 #include <WinUser.h>
@@ -17,11 +18,8 @@
 #include <exception>
 #include <gsl/util>
 
-class ResLib
+namespace ResLib
 {
-public:
-    ResLib() = default;
-
     struct ResLibException : public std::exception
     {
         ResLibException(std::string const& msg) 
@@ -61,7 +59,6 @@ public:
     static std::vector<std::string> EnumerateTypes(const char* fileName);
     static std::vector<int> EnumerateLanguages(const char* fileName, const char* resType);
 
-private:
     static std::string GetError()
     {
         const auto code = ::GetLastError();
@@ -102,14 +99,14 @@ void ResLib::Write(std::vector<unsigned char> const& data, const char* fileName,
     }
 
     std::wstring customType;
-    auto resType = ResTypes::GetValue(resTypeStr, customType);
-    if (resType == ResTypes::UNDEFINED_TYPE)
+    auto resType = Types::GetValue(resTypeStr, customType);
+    if (resType == Types::UNDEFINED_TYPE)
     {
         resType = customType.c_str();
     }
 
     std::wstring customId;
-    LPCWSTR resId = ResTypes::ParseResIdString(resIdStr, customId);
+    LPCWSTR resId = Types::ParseResIdString(resIdStr, customId);
 
     if (::UpdateResourceW(
         targetFileHandle,
@@ -146,11 +143,11 @@ std::vector<unsigned char> ResLib::Read(const char* fileName, const char* resTyp
     }
 
     std::wstring customId;
-    LPCWSTR resId = ResTypes::ParseResIdString(resIdStr, customId);
+    LPCWSTR resId = Types::ParseResIdString(resIdStr, customId);
 
     std::wstring customType;
-    auto resType = ResTypes::GetValue(resTypeStr, customType);
-    if (resType == ResTypes::UNDEFINED_TYPE)
+    auto resType = Types::GetValue(resTypeStr, customType);
+    if (resType == Types::UNDEFINED_TYPE)
     {
         resType = customType.c_str();
     }
@@ -214,8 +211,8 @@ std::vector<std::string> ResLib::Enum(const char* fileName, const char* resType)
     }
 
     std::wstring customType;
-    auto resTypeId = ResTypes::GetValue(resType, customType);
-    if (resTypeId == ResTypes::UNDEFINED_TYPE)
+    auto resTypeId = Types::GetValue(resType, customType);
+    if (resTypeId == Types::UNDEFINED_TYPE)
     {
         resTypeId = customType.c_str();
     }
@@ -262,7 +259,7 @@ std::vector<std::string> ResLib::EnumerateTypes(const char* fileName)
         [](HMODULE /*hModule*/, LPWSTR lpszType, LONG_PTR lParam) -> BOOL
         {
             auto types = reinterpret_cast<std::vector<std::string>*>(lParam);
-            types->emplace_back(ResTypes::GetName(lpszType));
+            types->emplace_back(Types::GetName(lpszType));
             return true;
         },
             reinterpret_cast<LONG_PTR>(&types),
